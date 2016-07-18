@@ -1,16 +1,17 @@
-; .emacs
+; .emacs.el
 
 ;; disable the initial splash screen
 (setq inhibit-splash-screen t)
+(setq inhibit-startup-message t)
 
-;; show the size of the file in kb, mb...
+ ;; show the size of the file in kb, mb...
 (size-indication-mode t)
 
 ;; show line numbers
-(global-linum-mode 1)
+(setq global-linum-mode 1)
 
 ;; show the column number in the status bar
-(column-number-mode t)
+(setq column-number-mode t)
 
 ;; syntax highlighting related
 (setq font-lock-maximum-decoration t)
