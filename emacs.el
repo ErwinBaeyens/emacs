@@ -18,7 +18,7 @@
 
 ;; match parentheses
 (show-paren-mode t)
-
+(electric-pair-mode t)
 ;; save minibuffer history
 (savehist-mode t)
 
@@ -39,16 +39,30 @@
 ;; indicate empty lines
 (setq indicate-empty-lines t)
 
+;; no tabs
+(setq-default indent-tabs-mode nil)
+
 ;; add a personal lisp dir
 (add-to-list 'load-path "~/.emacs.d/lisp/")
 
+;; make the lisp files in ~/.emacs.d/lisp available
+(require 'load-directory)
+(load-directory "~/.emacs.d/lisp/")
+
+(setq python-shell-interpreter '/usr/bin/python) 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(custom-enabled-themes (quote (tsdh-dark)))
- '(diff-switches "-u"))
+ '(diff-switches "-u")
+ '(org-agenda-files (quote ("~/1.org")))
+ '(package-selected-packages
+   (quote
+    (ac-php php-mode org org-gnome vala-mode ## bison-mode yaml-mode js2-mode auto-complete-exuberant-ctags ac-etags)))
+ '(safe-local-variable-values (quote ((conding . utf-8))))
+ '(send-mail-function (quote mailclient-send-it)))
 
 ;; load a theme
 (load-theme 'wombat)
@@ -87,7 +101,8 @@
 ;;
 (require 'package)
 (add-to-list 'package-archives
-	     '("melpa" . "https://melpa.org/packages/"))
+	     '("melpa" . "https://melpa.org/packages/")
+             '("org" . "https://orgmode.org/elpa/"))
 
 ;; format the title-bar to always include the buffer name
 (setq frame-title-format "emacs - %b - %f")
@@ -122,24 +137,27 @@
 (require 'python-mode)
 (add-to-list 'auto-mode-alist '("\\.py\\'" . python-mode))
 
-(require 'pymacs)
-(pymacs-load "ropemacs" "rope-")
+;; (require 'pymacs)
+;; (pymacs-load "ropemacs" "rope-")
 
-(autoload 'pymacs-apply "pymacs")
-(autoload 'pymacs-call "pymacs")
-(autoload 'pymacs-eval "pymacs" nil t)
-(autoload 'pymacs-exec "pymacs" nil t)
-(autoload 'pymacs-load "pymacs" nil t)
-(pymacs-load "ropemacs" "rope-")
-(setq ropemacs-enable-autoimport t)
-
+;; (autoload 'pymacs-apply "pymacs")
+;; (autoload 'pymacs-call "pymacs")
+;; (autoload 'pymacs-eval "pymacs" nil t)
+;; (autoload 'pymacs-exec "pymacs" nil t)
+;; (autoload 'pymacs-load "pymacs" nil t)
+;; (pymacs-load "ropemacs" "rope-")
+;; (setq ropemacs-enable-autoimport t)
+(add-hook 'python-mode-hook 'electric-pair-mode )
 (add-hook 'python-mode-hook 'imenu-add-menubar-index)
 (global-set-key [mouse-3] 'imenu)
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;; End python-mode related settings
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 
 (require 'auto-complete)
 (global-auto-complete-mode t)
@@ -199,3 +217,97 @@
   (setq ispel-program-name "hunspell")
   (setq ispell-extra-args '("-d en_GB")))
 )
+
+;; (require 'run-current-file)
+(defun run-current-file ()
+  "Execute the current file.
+For example, if the current buffer is the file x.py, then it'll call 「python x.py」 in a shell.
+The file can be Emacs Lisp, PHP, Perl, Python, Ruby, JavaScript, Bash, Ocaml, Visual Basic, TeX, Java, Clojure.
+File suffix is used to determine what program to run.
+
+If the file is modified or not saved, save it automatically before run.
+
+URL `http://ergoemacs.org/emacs/elisp_run_current_file.html'
+version 2016-01-28"
+  (interactive)
+  (let (
+         (-suffix-map
+          ;; (‹extension› . ‹shell program name›)
+          `(
+            ("php" . "php")
+            ("pl" . "perl")
+            ("py" . "python")
+            ("py3" . ,(if (string-equal system-type "windows-nt") "c:/Python32/python.exe" "python3"))
+            ("rb" . "ruby")
+            ("go" . "go run")
+            ("js" . "node") ; node.js
+            ("sh" . "bash")
+            ("clj" . "java -cp /home/xah/apps/clojure-1.6.0/clojure-1.6.0.jar clojure.main")
+            ("rkt" . "racket")
+            ("ml" . "ocaml")
+            ("vbs" . "cscript")
+            ("tex" . "pdflatex")
+            ("latex" . "pdflatex")
+            ("java" . "javac")
+            ;; ("pov" . "/usr/local/bin/povray +R2 +A0.1 +J1.2 +Am2 +Q9 +H480 +W640")
+            ))
+
+         -fname
+         -fSuffix
+         -prog-name
+         -cmd-str)
+
+    (when (null (buffer-file-name)) (save-buffer))
+    (when (buffer-modified-p) (save-buffer))
+
+    (setq -fname (buffer-file-name))
+    (setq -fSuffix (file-name-extension -fname))
+    (setq -prog-name (cdr (assoc -fSuffix -suffix-map)))
+    (setq -cmd-str (concat -prog-name " \""   -fname "\""))
+
+    (cond
+     ((string-equal -fSuffix "el") (load -fname))
+     ((string-equal -fSuffix "java")
+      (progn
+        (shell-command -cmd-str "*run-current-file output*" )
+        (shell-command
+         (format "java %s" (file-name-sans-extension (file-name-nondirectory -fname))))))
+     (t (if -prog-name
+            (progn
+              (message "Running…")
+              (shell-command -cmd-str "*run-current-file output*" ))
+          (message "No recognized program file suffix for this file."))))))
+
+(global-set-key (kbd "<f8>") 'run-current-file)
+
+(add-hook 'yaml-mode-hook
+	  (lambda ()
+	    (define-key yaml-mode-map "\C-m" 'newline-and-indent)))
+
+
+;;;;org-mode configuration
+;; enable org-mode
+(require 'org)
+;;
+(global-set-key "\C-cl" 'org-store-link)
+(global-set-key "\C-ca" 'org-agenda)
+(global-set-key "\C-cc" 'org-capture)
+(global-set-key "\C-cb" 'org-iswithchb)
+(setq org-todo-keywords
+      '((sequence "TODO" "IN-PROGRESS" "WAITING" "DONE")))
+
+;; enable auto-fill-mode in latex mode
+(add-hook 'latex-mode-hook 'turn-on-auto-fill)
+
+;; enable auto-fill-mode in text mode
+(add-hook 'text-mode-hook 'turn-on-auto-fill)
+
+;; php-mode
+;; php autocomplete 
+
+(add-hook 'php-mode-hook '
+          (lambda ()
+            (auto-complete-mode t)
+            (require' ac-php)
+            (setq ac-sources 'ac-source-php))
+          (yas-global-mode 1))
