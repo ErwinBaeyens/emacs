@@ -1,4 +1,11 @@
-; .emacs
+; .emacs.el
+
+(if (display-graphic-p)
+    (progn
+      ;; When running on Unix and X handle correct clipboard functionality
+      (setq x-select-enable-clipboard t)
+      (set-scroll-bar-mode 'right))
+  )
 
 ;; disable the initial splash screen
 (setq inhibit-splash-screen t)
@@ -7,268 +14,326 @@
  ;; show the size of the file in kb, mb...
 (size-indication-mode t)
 
-;; show linenumbers
-(setq line-number-mode t)
+;; show line numbers
+(setq global-linum-mode 1)
 
 ;; show the column number in the status bar
 (setq column-number-mode t)
 
 ;; syntax highlighting related
 (setq font-lock-maximum-decoration t)
-(setq global-font-lock-mode t)
+(global-font-lock-mode t)
 
 ;; match parentheses
-(setq show-paren-mode t)
-
+(show-paren-mode t)
+(electric-pair-mode t)
 ;; save minibuffer history
-(setq savehist-mode t)
+(savehist-mode t)
 
-;; When running on Unix and X handle correct clipboard functionality
-(setq x-select-enable-clipboard t)
 
-(setq set-scroll-bar-mode 'right)
+;; display the time in status line
+(display-time-mode t)
 
-;; display the time in the status line
-(setq display-time-mode t)
-
-;; alias yes and no to y and n
+;; alias y to yes and n to no
 (defalias 'yes-or-no-p 'y-or-n-p)
 
 ;; set the fill column
-(setq-default fill-column 100)
+(setq-default fill-column 80)
 
 ;; indicate empty lines
 (setq indicate-empty-lines t)
 
+;; no tabs
+(setq-default indent-tabs-mode nil)
+
 ;; add a personal lisp dir
 (add-to-list 'load-path "~/.emacs.d/lisp/")
 
+;; make the lisp files in ~/.emacs.d/lisp available
+;;(require 'load-directory)
+;;(load-directory "~/.emacs.d/lisp/")
+
+(setq python-shell-interpreter '/usr/bin/python) 
 (custom-set-variables
- ;; custom-set-variables was adde by Custom.
- ;; If you add it by hand, you could mess it up, so be carefull
- ;; your init file should contain only one such instance,
- ;; if there is more than one, they won't work right.
- '(custom-enabled-themes (quoute (tsdh-dark)))
- '(diff-switches "-u"))
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(custom-enabled-themes (quote (tsdh-dark)))
+ '(diff-switches "-u")
+ '(org-agenda-files (quote ("~/1.org")))
+ '(package-selected-packages
+   (quote
+    (nlinum ac-php php-mode org org-gnome vala-mode ## bison-mode yaml-mode js2-mode auto-complete-exuberant-ctags ac-etags)))
+ '(safe-local-variable-values (quote ((conding . utf-8))))
+ '(send-mail-function (quote mailclient-send-it)))
 
 ;; load a theme
-(load-theme 'wombat t)
+(load-theme 'wombat)
 
+;;; uncomment for CJK utf-8 support for non-Asian users
+;; (require 'un-define)
+(defun java-mode-untabify()  (save-excursion
+    (goto-char (point-min))
+    (while (re-search-forward "[ \t]+$" nil t)
+           (delete-region (match-beginning 0) (match-end 0)))
+    (goto-char (point-min))
+    (if (search-forward "\t" nil t)
+      (untabify (1- (point)) (point-max))))
+  nil)
 
-(tool-bar-mode -1)
-(menu-bar-mode 1)
+(add-hook 'java-mode-hook
+          '(lambda ()
+             (make-local-variable 'write-contents-hook)
+             (add-hook 'write-contents-hook 'java-mode-untabify)))
 
+(defun my-split-window-func ()
+  (interactive)
+  (split-window-vertically)
+  (set-window-buffer (next-window) (other-buffer)))
 
+(global-set-key "\C-x2" 'my-split-window-func)
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ )
 
+					;
+;; install melpa mode
+;;
 (require 'package)
 (add-to-list 'package-archives
-	     '("melpa-stable" . "http://stable.melpa.org/packages/") t)
+	     '("melpa" . "https://melpa.org/packages/")
+             '("org" . "https://orgmode.org/elpa/"))
+
+;; format the title-bar to always include the buffer name
+(setq frame-title-format "emacs - %b - %f")
+
+;; highlight incremental search
+(setq search-highlight t)
+
+
 (when (< emacs-major-version 24)
-  ;; For important compatibility libraries like cl-lib
-  (add-to-list 'package-archives'("gnu" . "http://elpa.gnu.org/packages/")))
+  ;; for important compatibility libraries like cl-lib
+  (add-to-list 'package-archives '("gnu" . "http://elpa.gnu.org/packages/")))
 (package-initialize)
+(add-to-list 'auto-mode-alist '("\\.js\\'" . js2-mode))
+
+(add-to-list 'load-path "~/.emacs.d/melpa/auto-complete-1.5.0")
+
+(require 'auto-complete-config)
+(add-to-list 'ac-dictionary-directories "~/emacs.d/auto-complete-1.5.0/dict")
+;;(setq-
+ 
+(add-hook 'js2-mode-hook 'ac-js2-mode)
 
 
-(defun set-newline-and-indent ()
-  (local-set-key (kbd "RET") 'newline-and-indent))
-
-(add-hook 'python-mode-hook 'set-newline-and-indent)
-(add-hook 'python-mode-hook 'electric-pair-mode)
-(add-hook 'python-mode-hook 'hs-minor-mode)
-
-
-;; ;(custom-set-variables
-;;  '(initial-frame-alist (quote ((fullscreen . maximized)))))
-
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-;; startup using fullscreen
+;; Begin python-mode related settings
 ;;
-(defun toggle-fullscreen()
-  " Toggle fullscreen on X11"
-  (interactive)
-  (when ( eq window-system 'x)
-    (set-frame-parameter
-     nil 'fullscreen
-     (when (not (frame-parameter nil-'fullscreen)) 'fullboth))))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(add-to-list 'load-path "~/.emacs.d/lisp/python-mode") 
+(setq py-install-directory "~/.emacs.d/lisp/python-mode")
 
-(global-set-key [f11] 'toggle-fullscreen)
+(require 'python-mode)
+(add-to-list 'auto-mode-alist '("\\.py\\'" . python-mode))
 
-(defun fullscreen ( )
-  (interactive)
-  (x-send-client-message nil 0 nil "_NET_WM_STATE" 32
-			 '(2 "_NET_WM_STATE_FULLSCREEN" 0)))
+;; (require 'pymacs)
+;; (pymacs-load "ropemacs" "rope-")
 
-;; find-file-root
-;; this lets you open files with the root credentials
+;; (autoload 'pymacs-apply "pymacs")
+;; (autoload 'pymacs-call "pymacs")
+;; (autoload 'pymacs-eval "pymacs" nil t)
+;; (autoload 'pymacs-exec "pymacs" nil t)
+;; (autoload 'pymacs-load "pymacs" nil t)
+;; (pymacs-load "ropemacs" "rope-")
+;; (setq ropemacs-enable-autoimport t)
+(add-hook 'python-mode-hook 'electric-pair-mode )
+(add-hook 'python-mode-hook 'imenu-add-menubar-index)
+(global-set-key [mouse-3] 'imenu)
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defvar find-file-root-prefix
-  (if (featurep 'xemax)"/[sudo/root@localhost]" "/sudo:root@localhost:")
-  "*The filename prefix used to open a file with`find-file-root'")
+;; End python-mode related settings
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+(require 'auto-complete)
+(global-auto-complete-mode t)
+
+;; mic-paren mode for advanced parantheses matching
+(require 'mic-paren) ; loading
+(paren-activate)     ; activating
+
+
+;; find-file-root 
+(defvar find-file-root-prefix (if
+	(featurep 'xemacs) "/[sudo/root@localhost]" "/sudo:root@localhost:" )
+	"*The filename prefix used to open a file with `find-file-root'")
 
 (defvar find-file-root-history nil
-  "History list for file found using `find-file-root'.")
+  "History list for files found using `find-file-root'.")
 
 (defvar find-file-root-hook nil
-  "Normal hook for functions to run after finding a \"root\" file.")
+  "Normal hook for fuctions to run after finding a \"root\" file.")
 
 (defun find-file-root()
-  "*Find a file as the root user. Prepends`find-file-root-prefix'
-  to the selected file nameso that it may be accessed via the
-  corresponding tramp method."
+  "*Open a file as the root user.
+  Prepends `find-file-root-prefix' to the selected file name so that it 
+  may be accessed via the corresponding tramp mehod."
+
   (interactive)
   (require 'tramp)
   (let* (;; we bind the variable `file-name-history' locally so we can
-	 ;; use a separate history list for root files.
+	 ;; use a separate history list for, "root" files.
 	 (file-name-history find-file-root-history)
 	 (name (or buffer-file-name default-directory))
 	 (tramp (and (tramp-tramp-file-p name)
 		     (tramp-dissect-file-name name)))
 	 path dir file)
-	; if called from a root file,  we need to fix up the path .
+   ;; If called from a "root" file, we need to fix up the path.
     (when tramp
       (setq path (tramp-file-name-localname tramp)
-	    dir(file-name-directory path)))
+	    dir (file-name-directory path)))
 
-    (when (setq file (read-file-name "Find file(UID = 0): "dir path))
+    (when (setq file (read-file-name "Find fike(UID = 0): " dir path))
       (find-file (concat find-file-root-prefix file))
-      ;; if this all succeeded save our new historylist.
-      (setq find-file-root-history file-name-history)
-      ;; allow some user customisation
-      (run-hooks 'find-file-root-hook))))
-
-(global-set-key [(control x)(control t)] 'find-file-root)
-
-(defun backward-kill-line (arg)
-  "Kill line Backwards."
-  (interactive "p")
-  (kill-line (- 1 arg)))
-
-(global-set-key "\C-c\C-c" 'backward-kill-line) ;;'C-cC-c'
-(global-auto-complete-mode t)
-
-;; activate Which-emacs
-(require 'which-key)
-(which-key-mode)
+      ;; If this all succeeded save our new history list.
+    (setq find-file-root-history file-name-history)
+    ;; allow some user customisation
+    (run-hooks 'find-file-root-hook))))
 
 
-;;
-;; insert the date of today
-;;
+(global-set-key [(control x) (control t)] 'find-file-root)
 
-(require 'calendar)
+;; find aspell and hunspell automatically
+(cond
+ ((executable-find "aspell")
+  (setq ispell-program-name "aspell")
+  (setq ispell-extra-args '("--sug-mode=ultra" "--lang=en_GB")
+))
+ ((executable "hunspell")
+  (setq ispel-program-name "hunspell")
+  (setq ispell-extra-args '("-d en_GB")))
+)
 
-;; defun insdate-insert-current-date
-;; &optional omit-day-of-week-p
+;; (require 'run-current-file)
+(defun run-current-file ()
+  "Execute the current file.
+For example, if the current buffer is the file x.py, then it'll call 「python x.py」 in a shell.
+The file can be Emacs Lisp, PHP, Perl, Python, Ruby, JavaScript, Bash, Ocaml, Visual Basic, TeX, Java, Clojure.
+File suffix is used to determine what program to run.
 
-(defun insdate-insert-current-date(&optional omit-day-of-week-p)
-  "insert today's date using the current locale.
-With a prefix argument, the date is inserted without the day of
-the week."
-  (interactive "P*")
-  (insert(calendar-date-string (calendar-current-date)nil
-			       omit-day-of-week-p)))
+If the file is modified or not saved, save it automatically before run.
 
-(global-set-key "\C-x\M-d" 'insdate-insert-current-date)
-
-
-(add-to-list 'load-path "/usr/share/emacs/site-lisp/git")
-(add-to-list 'vc-handled-backends 'GIT)
-(autoload 'git-status "git" "Entry point in to git-status mode." t)
-(autoload 'git-blame-mode "git-blame"
-  "Minor mode for incremental blame for GIT." t)
-
-;; Key bindings for git
-(global-set-key "\C-xgs" 'git-status)
-
-;; all blank lines except single ones
-(defun single-lines-only()
-  "replace multiple blanklines with a single one"
+URL `http://ergoemacs.org/emacs/elisp_run_current_file.html'
+version 2016-01-28"
   (interactive)
-  (goto-char (point-min))
-  (while (re-search-forward "\\(^\\s-*$\\)\n" nil t)
-    (replace-match "\n")
-    (forward-char 1)
-    )
-  )
+  (let (
+         (-suffix-map
+          ;; (‹extension› . ‹shell program name›)
+          `(
+            ("php" . "php")
+            ("pl" . "perl")
+            ("py" . "python")
+            ("py3" . ,(if (string-equal system-type "windows-nt") "c:/Python32/python.exe" "python3"))
+            ("rb" . "ruby")
+            ("go" . "go run")
+            ("js" . "node") ; node.js
+            ("sh" . "bash")
+            ("clj" . "java -cp /home/xah/apps/clojure-1.6.0/clojure-1.6.0.jar clojure.main")
+            ("rkt" . "racket")
+            ("ml" . "ocaml")
+            ("vbs" . "cscript")
+            ("tex" . "pdflatex")
+            ("latex" . "pdflatex")
+            ("java" . "javac")
+            ;; ("pov" . "/usr/local/bin/povray +R2 +A0.1 +J1.2 +Am2 +Q9 +H480 +W640")
+            ))
+
+         -fname
+         -fSuffix
+         -prog-name
+         -cmd-str)
+
+    (when (null (buffer-file-name)) (save-buffer))
+    (when (buffer-modified-p) (save-buffer))
+
+    (setq -fname (buffer-file-name))
+    (setq -fSuffix (file-name-extension -fname))
+    (setq -prog-name (cdr (assoc -fSuffix -suffix-map)))
+    (setq -cmd-str (concat -prog-name " \""   -fname "\""))
+
+    (cond
+     ((string-equal -fSuffix "el") (load -fname))
+     ((string-equal -fSuffix "java")
+      (progn
+        (shell-command -cmd-str "*run-current-file output*" )
+        (shell-command
+         (format "java %s" (file-name-sans-extension (file-name-nondirectory -fname))))))
+     (t (if -prog-name
+            (progn
+              (message "Running…")
+              (shell-command -cmd-str "*run-current-file output*" ))
+          (message "No recognized program file suffix for this file."))))))
+
+(global-set-key (kbd "<f8>") 'run-current-file)
+
+(add-hook 'yaml-mode-hook
+	  (lambda ()
+	    (define-key yaml-mode-map "\C-m" 'newline-and-indent)))
 
 
+;;;;org-mode configuration
+;; enable org-mode
+(require 'org)
 ;;
-;; provisions for iedit-mode this allows for multiple edits in a file
-;; like changing the name of a variabel in one go in the entire file
-;;
+(global-set-key "\C-cl" 'org-store-link)
+(global-set-key "\C-ca" 'org-agenda)
+(global-set-key "\C-cc" 'org-capture)
+(global-set-key "\C-cb" 'org-iswithchb)
+(setq org-todo-keywords
+      '((sequence "TODO" "IN-PROGRESS" "WAITING" "DONE")))
 
-(add-to-list 'load-path (expand-file-name "~erwin/.emacs.d/lisp/iedit"))
-(require 'iedit)
+;; enable auto-fill-mode in latex mode
+(add-hook 'latex-mode-hook 'turn-on-auto-fill)
 
-(defun iedit-dwim (arg)
-  "starts iedit but uses \\[narrow-to-defun] to limit its scope."
-  (interactive "P")
-  (if arg
-      (iedit-mode)
-    (save-excursion
-      (save-restriction
-	(widen)
-	;; tusi function deternines the scope of iedti-start.
-	(if iedit-mode
-	    (iedit-done)
-	  ;;current word can be replaced by any
-	  ;; other function
-	  (narrow-to-defun)
-	  (iedit-start (current-word)(point-min)(point-max)))))))
+;; enable auto-fill-mode in text mode
+(add-hook 'text-mode-hook 'turn-on-auto-fill)
 
+;; php-mode
+;; php autocomplete 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-;;  Begin python-mode related settings
-;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(add-to-list 'load-path "~/.emacs.d/python-mode")
-(setq py-install-directory "~/.emacs.d/lisp/python-mode")
+(add-hook 'php-mode-hook '
+          (lambda ()
+            (auto-complete-mode t)
+            (require' ac-php)
+            (setq ac-sources 'ac-source-php))
+          (yas-global-mode 1))
 
-(require 'python-mode)
-(add-to-list 'auto-mode-alist '("\\.py\\'" . python -mode))
+(require 'yaml-mode)
+(add-to-list 'auto-mode-alist '("\\.yml\\'" . yaml-mode))
+(add-hook 'yaml-mode-hook
+          '(lambda()
+          (define-key yaml-mode-map "C-m" 'newline-and-indent)))
+(add-hook 'yaml-mode-hook
+          '(lambda()
+             (auto-complete-mode t)
+             (setq ac-yaml 'ac-source-yaml)))
 
-(require 'pymacs)
-(pymacs-load "ropemacs" "rope-")
+;; enabble jiggle-mode. This allows for the cursor to jiggle in order to find it more
+;; easy after switching to a new window or after a search. It only works in graphical
+;; mode and the jiggle speed needs to be tuned to ones personal taste.
+;; get it here: https://github.com/emres/jiggle
 
-(autoload 'pymacs-apply "pymacs")
-(autoload 'pymacs-call "pymacs")
-(autoload 'pymacs-eval "pymacs" nil t)
-(autoload 'pymacs-exec "pymacs" nil t)
-(autoload 'pymacs-load "pymacs" nil t)
-(pymacs-load "ropemacs" "rope-")
-(setq ropemacs-enable-autoimport t)
-
-(add-hook 'python-mode-hook 'imenu-add-menubar-index)
-(global-set-key [mouse-3] 'imenu)
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-;; End of python related settings
-;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;;(eval-after-load "pymacs"
-;;  '(add-to-list 'pymacs-load-path  "~/.pymacs"))
-
-(when (load "flymake" t)
-  (defun flymake-pyflakes-init()
-    (let* ((temp-file (flymake-init-create-temp-buffer-copy
-		       'flymake-create-temp-inplace))
-	   (local-file (file-relative-name
-			temp-file
-			(file-name-directory buffer-file-name))))
-      (list "pyflakes" (list local-file))))
-
-  (add-to-list 'flymake-allowed-file-name-masks
-	       '("\\.py\\'" flymake-pyflakes-init)))
-
-(add-hook 'find-file-hook 'flymake-find-file-hook)
-
-
-(defun my-flymake-show-help()
-  (when (get-char-property (point) 'flymake-overlay)
-    (let ((help(get-char-property (point) 'help-echo)))
-      (if help (message "%s" help)))))
-
-(add-hook 'post-command-hook 'my-flymake-show-help)
-
+(require 'jiggle)
+(jiggle-mode 1)
+(setq jiggle-sit-for-how-long .08)
+(setq jiggle-how-many-times 6)
+(jiggle-searches-too 1)
+(global-set-key(read-kbd-macro "C-c C-SPC") 'jiggle-cursor)

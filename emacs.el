@@ -1,5 +1,12 @@
 ; .emacs.el
 
+(if (display-graphic-p)
+    (progn
+      ;; When running on Unix and X handle correct clipboard functionality
+      (setq x-select-enable-clipboard t)
+      (set-scroll-bar-mode 'right))
+  )
+
 ;; disable the initial splash screen
 (setq inhibit-splash-screen t)
 (setq inhibit-startup-message t)
@@ -23,10 +30,6 @@
 ;; save minibuffer history
 (savehist-mode t)
 
-;; When running on Unix and X handle correct clipboard functionality
-(setq x-select-enable-clipboard t)
-
-(set-scroll-bar-mode 'right)
 
 ;; display the time in status line
 (display-time-mode t)
@@ -47,8 +50,8 @@
 (add-to-list 'load-path "~/.emacs.d/lisp/")
 
 ;; make the lisp files in ~/.emacs.d/lisp available
-(require 'load-directory)
-(load-directory "~/.emacs.d/lisp/")
+;;(require 'load-directory)
+;;(load-directory "~/.emacs.d/lisp/")
 
 (setq python-shell-interpreter '/usr/bin/python) 
 (custom-set-variables
@@ -61,7 +64,7 @@
  '(org-agenda-files (quote ("~/1.org")))
  '(package-selected-packages
    (quote
-    (ac-php php-mode org org-gnome vala-mode ## bison-mode yaml-mode js2-mode auto-complete-exuberant-ctags ac-etags)))
+    (nlinum ac-php php-mode org org-gnome vala-mode ## bison-mode yaml-mode js2-mode auto-complete-exuberant-ctags ac-etags)))
  '(safe-local-variable-values (quote ((conding . utf-8))))
  '(send-mail-function (quote mailclient-send-it)))
 
@@ -312,3 +315,25 @@ version 2016-01-28"
             (require' ac-php)
             (setq ac-sources 'ac-source-php))
           (yas-global-mode 1))
+
+(require 'yaml-mode)
+(add-to-list 'auto-mode-alist '("\\.yml\\'" . yaml-mode))
+(add-hook 'yaml-mode-hook
+          '(lambda()
+          (define-key yaml-mode-map "C-m" 'newline-and-indent)))
+(add-hook 'yaml-mode-hook
+          '(lambda()
+             (auto-complete-mode t)
+             (setq ac-yaml 'ac-source-yaml)))
+
+;; enabble jiggle-mode. This allows for the cursor to jiggle in order to find it more
+;; easy after switching to a new window or after a search. It only works in graphical
+;; mode and the jiggle speed needs to be tuned to ones personal taste.
+;; get it here: https://github.com/emres/jiggle
+
+(require 'jiggle)
+(jiggle-mode 1)
+(setq jiggle-sit-for-how-long .08)
+(setq jiggle-how-many-times 6)
+(jiggle-searches-too 1)
+(global-set-key(read-kbd-macro "C-c C-SPC") 'jiggle-cursor)

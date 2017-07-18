@@ -326,3 +326,14 @@ version 2016-01-28"
              (auto-complete-mode t)
              (setq ac-yaml 'ac-source-yaml)))
 
+;; enabble jiggle-mode. This allows for the cursor to jiggle in order to find it more
+;; easy after switching to a new window or after a search. It only works in graphical
+;; mode and the jiggle speed needs to be tuned to ones personal taste.
+;; get it here: https://github.com/emres/jiggle
+
+(require 'jiggle)
+(jiggle-mode 1)
+(setq jiggle-sit-for-how-long .08)
+(setq jiggle-how-many-times 6)
+(jiggle-searches-too 1)
+(global-set-key(read-kbd-macro "C-c C-SPC") 'jiggle-cursor)
