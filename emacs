@@ -1,24 +1,30 @@
-; .emacs.el
+;; -*- mode: lisp;  fill-column: 75; comment-column: 50; -*-
+;; .emacs.el
 
 (if (display-graphic-p)
     (progn
       ;; When running on Unix and X handle correct clipboard functionality
-      (setq x-select-enable-clipboard t)
+      (setq x-select-enable-clppipboard t)
       (set-scroll-bar-mode 'right))
   )
 
 ;; disable the initial splash screen
 (setq inhibit-splash-screen t)
 (setq inhibit-startup-message t)
+(tool-bar-mode 0)
+
+;; setup the initial scratch file
+(setq initial-major-mode 'python-mode)
+(setq initial-scratch-message nil)
 
  ;; show the size of the file in kb, mb...
 (size-indication-mode t)
 
 ;; show line numbers
-(setq global-linum-mode 1)
+(global-linum-mode t)
 
 ;; show the column number in the status bar
-(setq column-number-mode t)
+(column-number-mode t)
 
 ;; syntax highlighting related
 (setq font-lock-maximum-decoration t)
@@ -27,9 +33,9 @@
 ;; match parentheses
 (show-paren-mode t)
 (electric-pair-mode t)
+
 ;; save minibuffer history
 (savehist-mode t)
-
 
 ;; display the time in status line
 (display-time-mode t)
@@ -40,8 +46,8 @@
 ;; set the fill column
 (setq-default fill-column 80)
 
-;; indicate empty lines
-(setq indicate-empty-lines t)
+;; show trailing whitespace
+(setq show-trailing-whitespace 1)
 
 ;; no tabs
 (setq-default indent-tabs-mode nil)
@@ -49,43 +55,8 @@
 ;; add a personal lisp dir
 (add-to-list 'load-path "~/.emacs.d/lisp/")
 
-;; make the lisp files in ~/.emacs.d/lisp available
-;;(require 'load-directory)
-;;(load-directory "~/.emacs.d/lisp/")
-
-(setq python-shell-interpreter '/usr/bin/python) 
-(custom-set-variables
- ;; custom-set-variables was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(custom-enabled-themes (quote (tsdh-dark)))
- '(diff-switches "-u")
- '(org-agenda-files (quote ("~/1.org")))
- '(package-selected-packages
-   (quote
-    (nlinum ac-php php-mode org org-gnome vala-mode ## bison-mode yaml-mode js2-mode auto-complete-exuberant-ctags ac-etags)))
- '(safe-local-variable-values (quote ((conding . utf-8))))
- '(send-mail-function (quote mailclient-send-it)))
-
 ;; load a theme
 (load-theme 'wombat)
-
-;;; uncomment for CJK utf-8 support for non-Asian users
-;; (require 'un-define)
-(defun java-mode-untabify()  (save-excursion
-    (goto-char (point-min))
-    (while (re-search-forward "[ \t]+$" nil t)
-           (delete-region (match-beginning 0) (match-end 0)))
-    (goto-char (point-min))
-    (if (search-forward "\t" nil t)
-      (untabify (1- (point)) (point-max))))
-  nil)
-
-(add-hook 'java-mode-hook
-          '(lambda ()
-             (make-local-variable 'write-contents-hook)
-             (add-hook 'write-contents-hook 'java-mode-untabify)))
 
 (defun my-split-window-func ()
   (interactive)
@@ -93,14 +64,8 @@
   (set-window-buffer (next-window) (other-buffer)))
 
 (global-set-key "\C-x2" 'my-split-window-func)
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- )
 
-					;
+
 ;; install melpa mode
 ;;
 (require 'package)
@@ -135,6 +100,7 @@
 ;; Begin python-mode related settings
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(setq python-shell-interpreter '/usr/bin/python) 
 (add-to-list 'load-path "~/.emacs.d/lisp/python-mode") 
 (setq py-install-directory "~/.emacs.d/lisp/python-mode")
 
@@ -224,15 +190,16 @@
 
 ;; (require 'run-current-file)
 (defun run-current-file ()
-  "Execute the current file.
-For example, if the current buffer is the file x.py, then it'll call 「python x.py」 in a shell.
-The file can be Emacs Lisp, PHP, Perl, Python, Ruby, JavaScript, Bash, Ocaml, Visual Basic, TeX, Java, Clojure.
-File suffix is used to determine what program to run.
+  "Execute the current file. For example, if the current buffer 
+   is the file x.py, then it'll call 「python x.py」 in a shell.
+   The file can be Emacs Lisp, PHP, Perl, Python, Ruby, JavaScript, 
+   Bash, Ocaml, Visual Basic, TeX, Java, Clojure.
+   File suffix is used to determine what program to run.
 
-If the file is modified or not saved, save it automatically before run.
+   If the file is modified or not saved, save it automatically before run.
 
-URL `http://ergoemacs.org/emacs/elisp_run_current_file.html'
-version 2016-01-28"
+   URL `http://ergoemacs.org/emacs/elisp_run_current_file.html'
+   version 2016-01-28"
   (interactive)
   (let (
          (-suffix-map
@@ -253,7 +220,6 @@ version 2016-01-28"
             ("tex" . "pdflatex")
             ("latex" . "pdflatex")
             ("java" . "javac")
-            ;; ("pov" . "/usr/local/bin/povray +R2 +A0.1 +J1.2 +Am2 +Q9 +H480 +W640")
             ))
 
          -fname
@@ -308,7 +274,6 @@ version 2016-01-28"
 
 ;; php-mode
 ;; php autocomplete 
-
 (add-hook 'php-mode-hook '
           (lambda ()
             (auto-complete-mode t)
@@ -316,6 +281,7 @@ version 2016-01-28"
             (setq ac-sources 'ac-source-php))
           (yas-global-mode 1))
 
+;; yaml-mode 
 (require 'yaml-mode)
 (add-to-list 'auto-mode-alist '("\\.yml\\'" . yaml-mode))
 (add-hook 'yaml-mode-hook
@@ -326,14 +292,17 @@ version 2016-01-28"
              (auto-complete-mode t)
              (setq ac-yaml 'ac-source-yaml)))
 
-;; enabble jiggle-mode. This allows for the cursor to jiggle in order to find it more
-;; easy after switching to a new window or after a search. It only works in graphical
-;; mode and the jiggle speed needs to be tuned to ones personal taste.
-;; get it here: https://github.com/emres/jiggle
 
-(require 'jiggle)
-(jiggle-mode 1)
-(setq jiggle-sit-for-how-long .08)
-(setq jiggle-how-many-times 6)
-(jiggle-searches-too 1)
-(global-set-key(read-kbd-macro "C-c C-SPC") 'jiggle-cursor)
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(custom-enabled-themes (quote (tsdh-dark)))
+ '(diff-switches "-u")
+ '(org-agenda-files (quote ("~/1.org")))
+ '(package-selected-packages
+   (quote
+    (nlinum ac-php php-mode org org-gnome vala-mode ## bison-mode yaml-mode js2-mode auto-complete-exuberant-ctags ac-etags)))
+ '(safe-local-variable-values (quote ((conding . utf-8))))
+ '(send-mail-function (quote mailclient-send-it)))
