@@ -4,24 +4,29 @@
 (if (display-graphic-p)
     (progn
       ;; When running on Unix and X handle correct clipboard functionality
-      (setq x-select-enable-clppipboard t)
+      (setq x-select-enable-clipboard t)
       (set-scroll-bar-mode 'right))
   )
+
+
 
 ;; disable the initial splash screen
 (setq inhibit-splash-screen t)
 (setq inhibit-startup-message t)
 (tool-bar-mode 0)
 
-;; setup the initial scratch file
-(setq initial-major-mode 'python-mode)
-(setq initial-scratch-message nil)
+;; load a theme
+(load-theme 'wombat)
 
- ;; show the size of the file in kb, mb...
+;; show the size of the file in kb, mb...
 (size-indication-mode t)
 
 ;; show line numbers
 (global-linum-mode t)
+
+;; setup the initial scratch file
+(setq initial-major-mode 'python-mode)
+(setq initial-scratch-message nil)
 
 ;; show the column number in the status bar
 (column-number-mode t)
@@ -55,15 +60,18 @@
 ;; add a personal lisp dir
 (add-to-list 'load-path "~/.emacs.d/lisp/")
 
-;; load a theme
-(load-theme 'wombat)
-
 (defun my-split-window-func ()
   (interactive)
   (split-window-vertically)
   (set-window-buffer (next-window) (other-buffer)))
 
 (global-set-key "\C-x2" 'my-split-window-func)
+
+;; format the title-bar to always include the buffer name
+(setq frame-title-format "emacs - %b - %f")
+
+;; highlight incremental search
+(setq search-highlight t)
 
 
 ;; install melpa mode
@@ -73,54 +81,41 @@
 	     '("melpa" . "https://melpa.org/packages/")
              '("org" . "https://orgmode.org/elpa/"))
 
-;; format the title-bar to always include the buffer name
-(setq frame-title-format "emacs - %b - %f")
-
-;; highlight incremental search
-(setq search-highlight t)
-
-
 (when (< emacs-major-version 24)
   ;; for important compatibility libraries like cl-lib
   (add-to-list 'package-archives '("gnu" . "http://elpa.gnu.org/packages/")))
+
 (package-initialize)
-(add-to-list 'auto-mode-alist '("\\.js\\'" . js2-mode))
 
 (add-to-list 'load-path "~/.emacs.d/melpa/auto-complete-1.5.0")
 
-(require 'auto-complete-config)
-(add-to-list 'ac-dictionary-directories "~/emacs.d/auto-complete-1.5.0/dict")
-;;(setq-
- 
-(add-hook 'js2-mode-hook 'ac-js2-mode)
 
+;; mic-paren mode for advanced parantheses matching
+(require 'mic-paren) ; loading
+(paren-activate)     ; activating
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;; Begin python-mode related settings
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(setq python-shell-interpreter '/usr/bin/python) 
-(add-to-list 'load-path "~/.emacs.d/lisp/python-mode") 
-(setq py-install-directory "~/.emacs.d/lisp/python-mode")
 
 (require 'python-mode)
 (add-to-list 'auto-mode-alist '("\\.py\\'" . python-mode))
+(setq python-shell-interpreter '/usr/bin/python)
+(add-to-list 'load-path "~/.emacs.d/lisp/python-mode")
+(setq py-install-directory "~/.emacs.d/lisp/python-mode")
 
-;; (require 'pymacs)
-;; (pymacs-load "ropemacs" "rope-")
+;; enable flycheck
+(add-hook 'after-init-hook #'global-flycheck-mode)
 
-;; (autoload 'pymacs-apply "pymacs")
-;; (autoload 'pymacs-call "pymacs")
-;; (autoload 'pymacs-eval "pymacs" nil t)
-;; (autoload 'pymacs-exec "pymacs" nil t)
-;; (autoload 'pymacs-load "pymacs" nil t)
-;; (pymacs-load "ropemacs" "rope-")
-;; (setq ropemacs-enable-autoimport t)
-(add-hook 'python-mode-hook 'electric-pair-mode )
-(add-hook 'python-mode-hook 'imenu-add-menubar-index)
-(global-set-key [mouse-3] 'imenu)
 
+;; =============================================================================
+;; = Jedi mode for code completion
+;; =============================================================================
+(require 'jedi)
+(add-hook 'python-mode-hook 'jedi:setup)
+(setq jedi:complete-on-dot t)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -128,6 +123,9 @@
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(require 'auto-complete-config)
+(add-to-list 'ac-dictionary-directories "~/emacs.d/auto-complete-1.5.0/dict")
+(add-hook 'js2-mode-hook 'ac-js2-mode)
 
 (require 'auto-complete)
 (global-auto-complete-mode t)
@@ -137,10 +135,10 @@
 (paren-activate)     ; activating
 
 
-;; find-file-root 
+;; find-file-root
 (defvar find-file-root-prefix (if
-	(featurep 'xemacs) "/[sudo/root@localhost]" "/sudo:root@localhost:" )
-	"*The filename prefix used to open a file with `find-file-root'")
+  (featurep 'xemacs) "/[sudo/root@localhost]" "/sudo:root@localhost:" )
+  "*The filename prefix used to open a file with `find-file-root'")
 
 (defvar find-file-root-history nil
   "History list for files found using `find-file-root'.")
@@ -150,14 +148,14 @@
 
 (defun find-file-root()
   "*Open a file as the root user.
-  Prepends `find-file-root-prefix' to the selected file name so that it 
+  Prepends `find-file-root-prefix' to the selected file name so that it
   may be accessed via the corresponding tramp mehod."
 
   (interactive)
   (require 'tramp)
   (let* (;; we bind the variable `file-name-history' locally so we can
 	 ;; use a separate history list for, "root" files.
-	 (file-name-history find-file-root-history)
+ 	 (file-name-history find-file-root-history)
 	 (name (or buffer-file-name default-directory))
 	 (tramp (and (tramp-tramp-file-p name)
 		     (tramp-dissect-file-name name)))
@@ -167,15 +165,15 @@
       (setq path (tramp-file-name-localname tramp)
 	    dir (file-name-directory path)))
 
-    (when (setq file (read-file-name "Find fike(UID = 0): " dir path))
+    (when (setq file (read-file-name "Find file(UID = 0): " dir path))
       (find-file (concat find-file-root-prefix file))
-      ;; If this all succeeded save our new history list.
+       ;; If this all succeeded save our new history list.
     (setq find-file-root-history file-name-history)
     ;; allow some user customisation
     (run-hooks 'find-file-root-hook))))
 
 
-(global-set-key [(control x) (control t)] 'find-file-root)
+(global-set-key (kbd "C-x C-t") 'find-file-root)
 
 ;; find aspell and hunspell automatically
 (cond
@@ -188,11 +186,16 @@
   (setq ispell-extra-args '("-d en_GB")))
 )
 
+
+(add-hook 'yaml-mode-hook
+	  (lambda ()
+	    (define-key yaml-mode-map "\C-m" 'newline-and-indent)))
+
 ;; (require 'run-current-file)
 (defun run-current-file ()
-  "Execute the current file. For example, if the current buffer 
+  "Execute the current file. For example, if the current buffer
    is the file x.py, then it'll call 「python x.py」 in a shell.
-   The file can be Emacs Lisp, PHP, Perl, Python, Ruby, JavaScript, 
+   The file can be Emacs Lisp, PHP, Perl, Python, Ruby, JavaScript,
    Bash, Ocaml, Visual Basic, TeX, Java, Clojure.
    File suffix is used to determine what program to run.
 
@@ -250,19 +253,35 @@
 
 (global-set-key (kbd "<f8>") 'run-current-file)
 
-(add-hook 'yaml-mode-hook
-	  (lambda ()
-	    (define-key yaml-mode-map "\C-m" 'newline-and-indent)))
+(defun insert-current-time()
+  "insert the current weekday and time at point."
+  (interactive)
+  (insert (format-time-string current-time-format(current-time))))
+
+(defun insert-current-date-time()
+  "insert the current date and time at point."
+  (interactive)
+  (insert
+   (concat
+    (format-time-string "%Y-%m-%dT%T")
+    ((lambda (x) (concat (substring x 0 3) ":" (substring x 3 5)))
+     (format-time-string "%z")))))
 
 
-;;;;org-mode configuration
+(global-set-key "\C-cd" 'insert-current-date-time)
+(global-set-key "\C-ct" 'insert-current-time)
+
+(setq search-whitespace-regexp nil)
+
+;; org-mode configuration
 ;; enable org-mode
+
 (require 'org)
-;;
 (global-set-key "\C-cl" 'org-store-link)
 (global-set-key "\C-ca" 'org-agenda)
 (global-set-key "\C-cc" 'org-capture)
 (global-set-key "\C-cb" 'org-iswithchb)
+(setq org-log-done t)
 (setq org-todo-keywords
       '((sequence "TODO" "IN-PROGRESS" "WAITING" "DONE")))
 
@@ -273,7 +292,7 @@
 (add-hook 'text-mode-hook 'turn-on-auto-fill)
 
 ;; php-mode
-;; php autocomplete 
+;; php autocomplete
 (add-hook 'php-mode-hook '
           (lambda ()
             (auto-complete-mode t)
@@ -281,7 +300,7 @@
             (setq ac-sources 'ac-source-php))
           (yas-global-mode 1))
 
-;; yaml-mode 
+;; yaml-mode
 (require 'yaml-mode)
 (add-to-list 'auto-mode-alist '("\\.yml\\'" . yaml-mode))
 (add-hook 'yaml-mode-hook
@@ -292,17 +311,34 @@
              (auto-complete-mode t)
              (setq ac-yaml 'ac-source-yaml)))
 
+;; =============================================================================
+;; Multiple cursor setup
+;; =============================================================================
+(require 'multiple-cursors)
+(global-set-key (kbd "C-c C-a") 'mc/mark-all-like-this)
+
+
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(custom-enabled-themes (quote (tsdh-dark)))
- '(diff-switches "-u")
- '(org-agenda-files (quote ("~/1.org")))
+ '(column-number-mode t)
+ '(display-time-mode t)
+ '(font-use-system-font t)
  '(package-selected-packages
    (quote
-    (nlinum ac-php php-mode org org-gnome vala-mode ## bison-mode yaml-mode js2-mode auto-complete-exuberant-ctags ac-etags)))
+    (flymake-php json-mode icicles multiple-cursors flycheck jedi csharp-mode web-mode datetime-format datetime time-ext nlinum ac-php php-mode org org-gnome vala-mode ## bison-mode yaml-mode js2-mode auto-complete-exuberant-ctags ac-etags swiper-helm counsel swiper magit yasnippet yaml-mode speed-type python-mode python nlinum mic-paren load-dir jinja2-mode auto-complet)))
  '(safe-local-variable-values (quote ((conding . utf-8))))
- '(send-mail-function (quote mailclient-send-it)))
+ '(send-mail-function (quote mailclient-send-it))
+ '(show-paren-mode t)
+ '(size-indication-mode t)
+ '(tool-bar-mode nil))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(default ((t (:family "Cousine" :foundry "1ASC" :slant normal :weight normal :height 98 :width normal)))))
+(put 'dired-find-alternate-file 'disabled nil)
