@@ -186,11 +186,6 @@
   (setq ispell-extra-args '("-d en_GB")))
 )
 
-
-(add-hook 'yaml-mode-hook
-	  (lambda ()
-	    (define-key yaml-mode-map "\C-m" 'newline-and-indent)))
-
 ;; (require 'run-current-file)
 (defun run-current-file ()
   "Execute the current file. For example, if the current buffer
@@ -305,7 +300,7 @@
 (add-to-list 'auto-mode-alist '("\\.yml\\'" . yaml-mode))
 (add-hook 'yaml-mode-hook
           '(lambda()
-          (define-key yaml-mode-map "C-m" 'newline-and-indent)))
+          (define-key yaml-mode-map "\C-m" 'newline-and-indent)))
 (add-hook 'yaml-mode-hook
           '(lambda()
              (auto-complete-mode t)
@@ -317,7 +312,16 @@
 (require 'multiple-cursors)
 (global-set-key (kbd "C-c C-a") 'mc/mark-all-like-this)
 
-
+;; ==============================================================================
+;; web-mode set-up
+;; ==============================================================================
+(defun my-web-mode-hook ()
+  "Hooks and settings for webmode"
+  (setq web-mode-markup-indent-offset 2)
+  (setq web-mode-css-indent-offset 2)
+  (setq web-mode-code-indent-offset 4)
+  )
+(add-hook 'web-mode-hook 'my-web-mode-hook)
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
@@ -329,7 +333,7 @@
  '(font-use-system-font t)
  '(package-selected-packages
    (quote
-    (flymake-php json-mode icicles multiple-cursors flycheck jedi csharp-mode web-mode datetime-format datetime time-ext nlinum ac-php php-mode org org-gnome vala-mode ## bison-mode yaml-mode js2-mode auto-complete-exuberant-ctags ac-etags swiper-helm counsel swiper magit yasnippet yaml-mode speed-type python-mode python nlinum mic-paren load-dir jinja2-mode auto-complet)))
+    (powershell flymake-php json-mode icicles multiple-cursors flycheck jedi csharp-mode web-mode datetime-format datetime time-ext nlinum ac-php php-mode org org-gnome vala-mode ## bison-mode yaml-mode js2-mode auto-complete-exuberant-ctags ac-etags swiper-helm counsel swiper magit yasnippet yaml-mode speed-type python-mode python nlinum mic-paren load-dir jinja2-mode auto-complet)))
  '(safe-local-variable-values (quote ((conding . utf-8))))
  '(send-mail-function (quote mailclient-send-it))
  '(show-paren-mode t)
