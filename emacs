@@ -60,12 +60,36 @@
 ;; add a personal lisp dir
 (add-to-list 'load-path "~/.emacs.d/lisp/")
 
+;; ================================================================================
+;; window and user interface functions 
+;; ================================================================================
 (defun my-split-window-func ()
   (interactive)
   (split-window-vertically)
-  (set-window-buffer (next-window) (other-buffer)))
+  (set-window-buffer (next-window) (other-buffer))
+  )
 
 (global-set-key "\C-x2" 'my-split-window-func)
+
+
+(defun swap-windows()
+  "If you have 2 windows it swaps them."
+  (interactive)
+  (cond ((not (= (count-windows) 2)) (message "you need exactly 2 windows to do this."))
+        (t
+         (let* ((w1 (first (window-list)))
+                (w2 (second (window-list)))
+                (b1 (window-buffer w1))
+                (b2 (window-buffer w2))
+                (s1 (window-start w1))
+                (s2 (window-start w2)))
+           (set-window-buffer w1 b2)
+           (set-window-buffer w2 b1)
+           (set-window-start w1 s2)
+           (set-window-start w2 s1))))
+  )
+
+(global-set-key [C-tab] 'swap-windows)
 
 ;; format the title-bar to always include the buffer name
 (setq frame-title-format "emacs - %b - %f")
@@ -73,6 +97,9 @@
 ;; highlight incremental search
 (setq search-highlight t)
 
+;; ================================================================================
+;; End of window and user interface functions 
+;; ================================================================================
 
 ;; install melpa mode
 ;;
@@ -280,6 +307,8 @@
 (setq org-todo-keywords
       '((sequence "TODO" "IN-PROGRESS" "WAITING" "DONE")))
 
+(defun org-babel-execute:yaml (body params) body)
+
 ;; enable auto-fill-mode in latex mode
 (add-hook 'latex-mode-hook 'turn-on-auto-fill)
 
@@ -323,6 +352,32 @@
   )
 (add-hook 'web-mode-hook 'my-web-mode-hook)
 
+;; ================================================================================
+;; LDAP stuff
+;; ================================================================================
+(require 'eudc)
+
+(with-eval-after-load "message"
+  (define-key message-mode-map (kbd "TAB") 'eudc-expand-inline))
+(customize-set-variable 'eudc-server-hotlist
+                        '(("" . bbdb)
+                          ("ldap://pro-ipa-blo.psop.be" . ldap)))
+(customize-set-variable 'ldap-host-parameters-alist
+                        '(("ldap://pro-ipa-blo.psop.be"
+                           auth-source t)))
+;; ================================================================================
+;; end LDAP stuff
+;; ================================================================================
+
+;; ================================================================================
+;; magit stuff
+;; ================================================================================
+(global-set-key (kbd "C-x g") 'magit-status)
+;; ================================================================================
+;; end magit stuff
+
+;; ================================================================================
+
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -330,6 +385,8 @@
  ;; If there is more than one, they won't work right.
  '(column-number-mode t)
  '(display-time-mode t)
+ '(eudc-default-return-attributes (quote all))
+ '(eudc-use-raw-directory-names t)
  '(font-use-system-font t)
  '(package-selected-packages
    (quote
