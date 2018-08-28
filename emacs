@@ -278,6 +278,8 @@
 (defun insert-current-time()
   "insert the current weekday and time at point."
   (interactive)
+  (format-time-string "%z")
+  (current-time-format "%z")
   (insert (format-time-string current-time-format(current-time))))
 
 (defun insert-current-date-time()
