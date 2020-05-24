@@ -379,6 +379,21 @@
       '(("t" "todo" entry (file+headline "~Dropbox/Erwin Stuff/todo/tasks.org" "Tasks")
          "* TODO [#A] %?\nSCHEDULED: %(org-insert-time-stamp (org-read-date nil t \"+0d\"))\n")))
 
+;;  enable auto-fill-mode in org-mode
+(add-hook 'org-mode-hook 'turn-on-auto-fill)
+
+;; enable auto complete mode in org mode
+(add-hook 'org-mode-hook 'auto-complete-mode t)
+
+(org-babel-do-load-languages 'org-babel-load-languages '(
+                                                         (python . t)
+                                                         (ditaa . t))
+                             )
+
+
+;; -----------------------------------------------------------------------------
+;; End of org-mode config
+;; -----------------------------------------------------------------------------
 
 (defun org-babel-execute:yaml (body params) body)
 
