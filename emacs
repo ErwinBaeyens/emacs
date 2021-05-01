@@ -21,7 +21,7 @@
 (setq inhibit-splash-screen t)
 (setq inhibit-startup-message t)
 (tool-bar-mode 0)
-
+;; (menu-bar-mode 0)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (setq user-full-name "Erwin Baeyens")
@@ -31,12 +31,22 @@
 ;; load a theme
 (load-theme 'wombat)
 
-
 ;; show the size of the file in kb, mb...
 (size-indication-mode t)
 
 ;; show line numbers
 (global-linum-mode t)
+
+;; change the look of the linenubers
+(add-hook 'display-line-numbers-mode-hook
+	    (lambda ()
+	      (set-face-attribute 'line-number nil
+				  :weight 'normal)
+	      (set-face-attribute 'line-number-current-line nil
+				  :foreground (face-attribute 'cursor :background)
+				  :weight 'bold
+				  :slant 'normal)))
+
 
 
 ;; setup the initial scratch file
@@ -54,7 +64,8 @@
 (show-paren-mode t)
 (electric-pair-mode t)
 
-;; save minibuffer history
+;; minibuffer history
+
 (savehist-mode t)
 
 ;; display the time in status line
@@ -84,6 +95,10 @@
 	    (copy-sequence (normal-top-level-add-to-load-path'(".")))
 	    (normal-top-level-add-subdirs-to-load-path)))
 	 load-path)))
+
+(add-to-list 'exec-path "/usr/bin/")
+(setenv "PATH" (mapconcat 'identity exec-path ":"))
+
 
 ;; =============================================================================
 ;; window and user interface functions
@@ -126,7 +141,6 @@
 ;; End of window and user interface functions 
 ;; =============================================================================
 
-
 ;; =============================================================================
 ;; install melpa mode
 ;; =============================================================================
@@ -140,6 +154,11 @@
   (add-to-list 'package-archives '("gnu" . "http://elpa.gnu.org/packages/")))
 
 (package-initialize)
+(unless (package-installed-p 'use-package)
+  ;; only fetch the archives if you don't have use-package installed
+  (package-refresh-contents)
+  (package-install 'use-package))
+(require 'use-package)
 
 (add-to-list 'load-path "~/.emacs.d/lisp/elpa/auto-complete*")
 
@@ -213,6 +232,31 @@
 
 ;; =============================================================================
 ;; = find-file-root
+;; =============================================================================
+
+;; =============================================================================
+;; xml mode stuff
+;; =============================================================================
+(require 'hideshow)
+(require 'sgml-mode)
+(require 'nxml-mode)
+
+(add-to-list 'hs-special-modes-alist
+             '(nxml-mode
+               "<!--\\|<[^/>]*[^/]>"
+               "-->\\|<\[^/>]*[^/]>"
+
+               "<!--"
+               sgml-skip-tag-forward
+               nil))
+
+(add-hook 'nxml-mode-hook 'hs-minor-mode)
+
+;; optional keybinding, easuier than hs defaults
+(define-key nxml-mode-map (kbd "C-c h") 'hs-toggle-hiding)
+
+;; =============================================================================
+;; = End xml mode stuff
 ;; =============================================================================
 
 (defvar find-file-root-prefix (if
@@ -571,6 +615,22 @@ This function assumes that you use Y for correct and N for wrong answers"
 
 (add-hook 'after-save-hook #'run-a2x-to-generate-pdf)
 
+;; tell emacs where to find the mysql binary
+(setq sql-mysql-program "/usr/bin/mysql")
+
+;;
+;; copy and paste to and from other applications but emacs
+
+(xclip-mode 1)
+(setq
+     x-select-enable-clipboard t
+     x-select-enable-primary t
+     x-select-request-type '(UTF8_STRING COMPOUND_TEXT TEXT STRING)
+     x-stretch-cursor t)
+
+
+;; (use-package math-preview
+;;  :custom (math-preview-command "/usr/local/bin/math-preview"))
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
@@ -579,25 +639,24 @@ This function assumes that you use Y for correct and N for wrong answers"
  ;; If there is more than one, they won't work right.
  '(column-number-mode t)
  '(custom-safe-themes
-   (quote
-    ("6876d0eb1bcef5ce6a71434d7c19a66a1a14378e22dce3b72b1fbc51aeb5e18d" default)))
+   '("6876d0eb1bcef5ce6a71434d7c19a66a1a14378e22dce3b72b1fbc51aeb5e18d" default))
  '(display-time-mode t)
- '(eudc-default-return-attributes (quote all))
- '(eudc-server-hotlist (quote (("" . bbdb) ("ldap://pro-ipa-blo.psop.be" . ldap))))
+ '(eudc-default-return-attributes 'all)
+ '(eudc-server-hotlist '(("" . bbdb) ("ldap://pro-ipa-blo.psop.be" . ldap)))
  '(eudc-use-raw-directory-names t)
  '(font-use-system-font t)
  '(markdown-command "/usr/bin/pandoc")
- '(org-export-with-sub-superscripts (quote {}))
+ '(org-export-with-sub-superscripts '{})
  '(package-selected-packages
-   (quote
-    (aggressive-fill-paragraph aggressive-indent vterm autotetris-mode shackle wgrep-ag ag helm-swoop org-link-minor-mode md-readme ascii-art-to-unicode pyenv-mode ace-window projectile markdown-mode+ markdown-preview-eww markdown-preview-mode markdown-toc markdownfmt markdown-mode dired-subtree adoc-mode ox-asciidoc ## keychain-environment yafolding flymake-vala vala-mode vala-snippets highlight-indent-guides async dash ghub git-commit graphql treepy with-editor magit-popup ac-etags ac-html ac-html-angular ac-html-csswatcher ac-php ac-php-core ac-rtags auto-complet auto-complete-exuberant-ctags bison-mode counsel datetime datetime-format flycheck flycheck-phpstan flycheck-pycheckers flycheck-pyflakes flymake-json flymake-php flymake-python-pyflakes flymake-yaml gandalf-theme icicles jedi jinja2-mode js2-mode json-mode load-dir magit mic-paren multiple-cursors nlinum org org-gnome powershell python python-mode speed-type ssh ssh-agency ssh-config-mode ssh-deploy ssh-tunnels swiper swiper-helm tile time-ext typing web-mode yaml-mode yasnippet)))
- '(reb-re-syntax (quote read))
- '(safe-local-variable-values (quote ((conding . utf-8))))
- '(send-mail-function (quote mailclient-send-it))
+   '(cobol-mode cdlatex latex-math-preview latex-pretty-symbols latex-preview-pane latex-unicode-math-mode dash-at-point dash-functional lorem-ipsum hideshow-org fold-dwim fold-dwim-org fold-this folding ivy flymake-lua lua-mode aggressive-fill-paragraph aggressive-indent vterm autotetris-mode shackle wgrep-ag ag helm-swoop org-link-minor-mode md-readme ascii-art-to-unicode pyenv-mode ace-window projectile markdown-mode+ markdown-preview-eww markdown-preview-mode markdown-toc markdownfmt markdown-mode dired-subtree adoc-mode ox-asciidoc ## keychain-environment yafolding flymake-vala vala-mode vala-snippets highlight-indent-guides async dash ghub git-commit graphql treepy with-editor magit-popup ac-etags ac-html ac-html-angular ac-html-csswatcher ac-php ac-php-core ac-rtags auto-complet auto-complete-exuberant-ctags bison-mode counsel datetime datetime-format flycheck flycheck-phpstan flycheck-pycheckers flycheck-pyflakes flymake-json flymake-php flymake-python-pyflakes flymake-yaml gandalf-theme icicles jedi jinja2-mode js2-mode json-mode load-dir magit mic-paren multiple-cursors nlinum org org-gnome powershell python python-mode speed-type ssh ssh-agency ssh-config-mode ssh-deploy ssh-tunnels swiper swiper-helm tile time-ext typing web-mode yaml-mode yasnippet))
+ '(reb-re-syntax 'read)
+ '(safe-local-variable-values '((conding . utf-8)))
+ '(send-mail-function 'mailclient-send-it)
  '(show-paren-mode t)
  '(size-indication-mode t)
- '(sql-mysql-login-params (quote (user password server database port)))
- '(sql-mysql-program "mysql --protocol=tcp")
+ '(sql-electric-stuff 'semicolon)
+ '(sql-mysql-login-params '(user password server database port))
+ '(sql-mysql-program "mysql" t)
  '(tool-bar-mode nil))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -613,6 +672,15 @@ This function assumes that you use Y for correct and N for wrong answers"
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(default ((t (:family "DejaVu Sans Mono" :foundry "PfEd" :slant normal :weight normal :height 98 :width normal)))))
+ '(default ((t (:family "JetBrains Mono" :foundry "outline" :slant normal :weight normal :height 100 :width normal)))))
 (put 'dired-find-alternate-file 'disabled nil)
 (put 'scroll-left 'disabled nil)
+
+;; (set-face-attribute 'default-nil
+;;                     :family "JetBrains Mono"
+;;                     :foundry "outline"
+;;                     :slant 'normal'
+;;                     :weight 'normal'
+;;                     :height 120
+;;                     :width 'semi-condensed')
+
