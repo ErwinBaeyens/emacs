@@ -86,6 +86,22 @@
 ;; no tabs
 (setq-default indent-tabs-mode nil)
 
+;; ==========================================================================
+;; word and line wrapping settings mostly seen from doom emacs
+;; ==========================================================================
+
+;; continue words ast whitespace, instead of in the middle of a word.
+(setq-default words-wrap t)
+(setq-default truncate-lines t)
+(setq truncate-partial-width-windows nil)
+(setq sentence-end-double-space nil)
+;; required for POSIX compliance
+(setq require-final-newline t)
+
+(setq-default auto-fill-mode t)
+
+(add-hook 'text-mode-hook #'visual-line-mode)
+
 ;; set up the  load-path
 (let ((default-directory  "~/.emacs.d/lisp"))
   (setq load-path
