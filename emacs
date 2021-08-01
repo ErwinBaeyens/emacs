@@ -589,6 +589,18 @@ This function assumes that you use Y for correct and N for wrong answers"
 ;; Don ask for confirmation on every step
 (setq ibuffer-expert t)
 
+;; ===========================================================================
+;; markdown mode setup
+;;===========================================================================
+(autoload 'markdown-mode "markdown-mode"
+  "Majoor mode for editing markdown files" t)
+(add-to-list 'auto-mode-alist '("\\.markdown\\'" . markdown-mode))
+(add-to-list 'auto-mode-alist '("\\.md\\'" . markdown-mode))
+
+(autoload 'gfm-mode "markdown-mode"
+  "Major mode for editing GitHub Flavoured Markdown files" t)
+(add-to-list 'auto-mode-alist '("README\\.md\\'" . gfm-mode))
+
 
 ;; =============================================================================
 ;; This is for automatically generating the PDF file for the current AsciiDoc
