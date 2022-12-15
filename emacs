@@ -1,4 +1,4 @@
-;; -*- mode: lisp;  fill-column: 75; comment-column: 50; -*-
+();; -*- mode: lisp;  fill-column: 75; comment-column: 50; -*-
 ;; .emacs.el
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -80,8 +80,20 @@
 ;; show trailing whitespace
 (setq show-trailing-whitespace 1)
 
+;;; dired stuff
 ;; make dired sort with directories on top
 (setq dired-listing-switches "-al --group-directories-first")
+
+;; untabify all files in a directory
+(defun untabyfy-marked-files ()
+       (interactive)
+       (dolist (file (dired-get-marked-files))
+         (find-file file)
+         (untabify (point-min) (point-max))
+         (save-buffer)
+         (kill-buffer nil)))
+
+;;; end of dired stuff
 
 ;; no tabs
 (setq-default indent-tabs-mode nil)
@@ -177,7 +189,7 @@
   (package-install 'use-package))
 (require 'use-package)
 
-(add-to-list 'load-path "~/.emacs.d/lisp/elpa/auto-complete*")
+(add-to-list 'load-path "~/.emacs.d/elpa/auto-complete*")
 
 
 ;; =============================================================================
@@ -215,6 +227,19 @@
 (setq py-install-directory "~/.emacs.d/lisp/python-mode")
 
 
+(use-package pyvenv
+    :ensure t
+    :config
+    (pyvenv-mode t)
+    ;; set the correct interpreter
+    (setq pyvenv-post-activate-hooks
+          (list (lambda ()
+                  (setq python-shell-interpreter (concat pyvenv-virtual-env "bin/python3")))))
+    (setq pyvenv-post-deactivate-hooks
+          (list (lambda ()
+                  setq python-shell-interpreter "python3"))))
+
+
 ;; ;; enable flycheck
 ;; (add-hook 'after-init-hook #'global-flycheck-mode)
 
@@ -224,24 +249,13 @@
 ;; =============================================================================
 
 (require 'auto-complete-config)
-(add-to-list 'ac-dictionary-directories "~/emacs.d/auto-complete-1.5.0/dict")
+(add-to-list 'ac-dictionary-directories "~/emacs.d/elpa/auto-complete*/dict")
 (add-hook 'js2-mode-hook 'ac-js2-mode)
 
 
 (require 'auto-complete)
 (global-auto-complete-mode t)
 
-
-;; =============================================================================
-;; mic-paren mode for advanced parantheses matching
-;; =============================================================================
-(require 'mic-paren) ; loading
-(paren-activate)     ; activating
-
-
-;; =============================================================================
-;; = find-file-root
-;; =============================================================================
 
 ;; =============================================================================
 ;; xml mode stuff
@@ -470,12 +484,19 @@
              (auto-complete-mode t)
              (setq ac-yaml 'ac-source-yaml)))
 
+;; =============================================================================
+;; Additional set-up for encrypted yaml files ( ansible-vault-mode)
+;; =============================================================================
+;; (setq ansible-vault--vault-id "erwin.baeyens@benerail.com")
+(setq ansible-vault--password-file "/home/exl217/git/operations/werner/vault/decrypt-vault")
+(add-hook 'ansible-hook 'ansible-auto-decrypt-encrypt)
+
 
 ;; =============================================================================
 ;; Multiple cursor setup
 ;; =============================================================================
-(require 'multiple-cursors)
-(global-set-key (kbd "C-c C-a") 'mc/mark-all-like-this)
+;; (require 'multiple-cursors)                       
+;; (global-set-key (kbd "C-c C-a") 'mc/mark-all-like-this)
 
 
 ;; =============================================================================
@@ -493,7 +514,7 @@
 ;; (add-hook 'php-mode-hook 'hs-minor-mode)
 (add-hook 'emacs-lisp-mode-hook 'hs-minor-mode)
 (add-hook 'sh-mode-hook 'hs-minor-mode)
-(add-hook 'web-mode-hook 'hs-minor-mode)
+;; (add-hook 'web-mode-hook 'hs-minor-mode)
 
 
 ;; =============================================================================
@@ -605,9 +626,25 @@ This function assumes that you use Y for correct and N for wrong answers"
 ;; Don ask for confirmation on every step
 (setq ibuffer-expert t)
 
+
+;; =============================================================================
+;; add a checkmark on a table line
+;; =============================================================================
+(defun check-cell()
+  (interactive)
+  (let ((cell(org-table-get-field)))
+    (if (string-match "[[:graph:]]" cell)
+        (org-table-bank-field)
+        (insert "X"))
+    (org-table-next-row))
+  )
+
+(global-set-key (kbd "s-f") 'check-cell)
+
+
 ;; ===========================================================================
 ;; markdown mode setup
-;;===========================================================================
+;; ===========================================================================
 (autoload 'markdown-mode "markdown-mode"
   "Majoor mode for editing markdown files" t)
 (add-to-list 'auto-mode-alist '("\\.markdown\\'" . markdown-mode))
@@ -642,13 +679,19 @@ This function assumes that you use Y for correct and N for wrong answers"
 ;;
 ;; copy and paste to and from other applications but emacs
 
-(xclip-mode 1)
+;; (xclip-mode 1)
 (setq
      x-select-enable-clipboard t
      x-select-enable-primary t
      x-select-request-type '(UTF8_STRING COMPOUND_TEXT TEXT STRING)
      x-stretch-cursor t)
 
+
+
+;; =============================================================================
+;; set the default directory to use so that vterm works
+;; =============================================================================
+(setq default-directory "~/")
 
 ;; (use-package math-preview
 ;;  :custom (math-preview-command "/usr/local/bin/math-preview"))
@@ -665,11 +708,12 @@ This function assumes that you use Y for correct and N for wrong answers"
  '(eudc-default-return-attributes 'all)
  '(eudc-server-hotlist '(("" . bbdb) ("ldap://pro-ipa-blo.psop.be" . ldap)))
  '(eudc-use-raw-directory-names t)
- '(font-use-system-font t)
  '(markdown-command "/usr/bin/pandoc")
+ '(nxml-slash-auto-complete-flag t)
  '(org-export-with-sub-superscripts '{})
  '(package-selected-packages
-   '(cobol-mode cdlatex latex-math-preview latex-pretty-symbols latex-preview-pane latex-unicode-math-mode dash-at-point dash-functional lorem-ipsum hideshow-org fold-dwim fold-dwim-org fold-this folding ivy flymake-lua lua-mode aggressive-fill-paragraph aggressive-indent vterm autotetris-mode shackle wgrep-ag ag helm-swoop org-link-minor-mode md-readme ascii-art-to-unicode pyenv-mode ace-window projectile markdown-mode+ markdown-preview-eww markdown-preview-mode markdown-toc markdownfmt markdown-mode dired-subtree adoc-mode ox-asciidoc ## keychain-environment yafolding flymake-vala vala-mode vala-snippets highlight-indent-guides async dash ghub git-commit graphql treepy with-editor magit-popup ac-etags ac-html ac-html-angular ac-html-csswatcher ac-php ac-php-core ac-rtags auto-complet auto-complete-exuberant-ctags bison-mode counsel datetime datetime-format flycheck flycheck-phpstan flycheck-pycheckers flycheck-pyflakes flymake-json flymake-php flymake-python-pyflakes flymake-yaml gandalf-theme icicles jinja2-mode js2-mode json-mode load-dir magit mic-paren multiple-cursors nlinum org org-gnome powershell python python-mode speed-type ssh ssh-agency ssh-config-mode ssh-deploy ssh-tunnels swiper swiper-helm tile time-ext typing web-mode yaml-mode yasnippet))
+   '(cl-libify pyenv pyvenv vterm-toggle orgtbl-aggregate auto-complete-nxml html5-schema ## ansible-vault package-selected-packages
+               '(yasnippet yaml-mode web-mode typing time-ext tile swiper-helm swiper ssh-tunnels ssh-deploy ssh-config-mode ssh-agency ssh speed-type python-mode python powershell org-gnome org nlinum multiple-cursors mic-paren magit load-dir json-mode js2-mode jinja2-mode icicles gandalf-theme flymake-yaml flymake-python-pyflakes flymake-php flymake-json flycheck-pyflakes flycheck-pycheckers flycheck-phpstan flycheck datetime-format datetime counsel bison-mode auto-complete-exuberant-ctags auto-complet ac-rtags ac-php-core ac-php ac-html-csswatcher ac-html-angular ac-html ac-etags magit-popup with-editor treepy graphql git-commit ghub dash async highlight-indent-guides vala-snippets vala-mode flymake-vala yafolding keychain-environment ox-asciidoc adoc-mode dired-subtree markdown-mode markdownfmt markdown-toc markdown-preview-mode markdown-preview-eww markdown-mode+ projectile ace-window pyenv-mode ascii-art-to-unicode md-readme org-link-minor-mode helm-swoop ag wgrep-ag shackle autotetris-mode vterm aggressive-indent aggressive-fill-paragraph lua-mode flymake-lua ivy folding fold-this fold-dwim-org fold-dwim hideshow-org dash-functional dash-at-point latex-unicode-math-mode latex-preview-pane latex-pretty-symbols lorem-ipsum latex-math-preview cdlatex cobol-mode)))
  '(reb-re-syntax 'read)
  '(safe-local-variable-values '((conding . utf-8)))
  '(send-mail-function 'mailclient-send-it)
@@ -693,7 +737,7 @@ This function assumes that you use Y for correct and N for wrong answers"
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(default ((t (:family "JetBrains Mono" :foundry "outline" :slant normal :weight normal :height 100 :width normal)))))
+ '(default ((t (:family "Source Code Pro" :foundry "ADBO" :slant normal :weight normal :height 98 :width normal)))))
 (put 'dired-find-alternate-file 'disabled nil)
 (put 'scroll-left 'disabled nil)
 
