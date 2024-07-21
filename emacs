@@ -1,4 +1,4 @@
-();; -*- mode: lisp;  fill-column: 75; comment-column: 50; -*-
+;; -*- mode: lisp;  fill-column: 75; comment-column: 50; -*-
 ;; .emacs.el
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -25,7 +25,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (setq user-full-name "Erwin Baeyens")
-(setq user-mail-address "Erwin.Baeyens@belgiantrain.be")
+(setq user-mail-address "Erwin.Baeyens@benerail.com")
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; load a theme
@@ -35,17 +35,23 @@
 (size-indication-mode t)
 
 ;; show line numbers
-(global-linum-mode t)
+(if (version< emacs-version "26.1")
+    (progn (global-linun-mode t))
+    (progn (global-display-line-numbers-mode t))
+    )
+;; (global-display-line-numbers-mode t)
 
 ;; change the look of the linenubers
 (add-hook 'display-line-numbers-mode-hook
-	    (lambda ()
-	      (set-face-attribute 'line-number nil
-				  :weight 'normal)
-	      (set-face-attribute 'line-number-current-line nil
-				  :foreground (face-attribute 'cursor :background)
-				  :weight 'bold
-				  :slant 'normal)))
+	  (lambda ()
+            (setq display-line-numbers-type 'relative)
+	    (set-face-attribute 'line-number nil
+				:weight 'normal)
+	    (set-face-attribute 'line-number-current-line nil
+				:foreground (face-attribute 'cursor :background)
+				:weight 'bold
+                                :background "light sky blue"
+				:slant 'normal)))
 
 
 
@@ -79,7 +85,6 @@
 
 ;; show trailing whitespace
 (setq show-trailing-whitespace 1)
-
 ;;; dired stuff
 ;; make dired sort with directories on top
 (setq dired-listing-switches "-al --group-directories-first")
@@ -98,6 +103,17 @@
 ;; no tabs
 (setq-default indent-tabs-mode nil)
 
+
+;; save the window layout a exit
+;; (destktop-save-mode 1)
+
+;; =============================================================================
+;; make sure that new frames are getting focus
+;; =============================================================================
+(defun focus-new-client-frame()
+  (select-frame-set-input-focus (selected-frame)))
+
+(add-hook 'server-after-make-frame-hook #'focus-new-client-frame)
 ;; ==========================================================================
 ;; word and line wrapping settings mostly seen from doom emacs
 ;; ==========================================================================
@@ -139,6 +155,8 @@
 
 (global-set-key "\C-x2" 'my-split-window-func)
 
+;; jump backwards to the previous pane
+(global-set-key (kbd "S-C-x S-C-o") 'previous-multiframe-window)
 
 (defun swap-windows()
   "If you have 2 windows it swaps them."
@@ -189,7 +207,7 @@
   (package-install 'use-package))
 (require 'use-package)
 
-(add-to-list 'load-path "~/.emacs.d/elpa/auto-complete*")
+(add-to-list 'load-path "~/.emacs.d/elpa/auto-complee*")
 
 
 ;; =============================================================================
@@ -214,39 +232,45 @@
   (shackle-select-reused-windows t))
 
 
-;; =============================================================================
-;;
-;; Begin python-mode related settings
-;;
-;; =============================================================================
+;; ;; =============================================================================
+;; ;;
+;; ;; Begin python-mode related settings
+;; ;;
+;; ;; =============================================================================
 
-(require 'python-mode)
-(add-to-list 'auto-mode-alist '("\\.py\\'" . python-mode))
-(setq python-shell-interpreter '/usr/bin/python)
-(add-to-list 'load-path "~/.emacs.d/lisp/python-mode")
-(setq py-install-directory "~/.emacs.d/lisp/python-mode")
-
-
-(use-package pyvenv
-    :ensure t
-    :config
-    (pyvenv-mode t)
-    ;; set the correct interpreter
-    (setq pyvenv-post-activate-hooks
-          (list (lambda ()
-                  (setq python-shell-interpreter (concat pyvenv-virtual-env "bin/python3")))))
-    (setq pyvenv-post-deactivate-hooks
-          (list (lambda ()
-                  setq python-shell-interpreter "python3"))))
+;; (require 'python-mode)
+;; (add-to-list 'auto-modalist '("\\.py\\'" . python-mode))
+;; (setq python-shell-interpreter '/usr/bin/python)
+;; (add-to-list 'load-path "~/.emacs.d/lisp/python-mode")
+;; (setq py-install-directory "~/.emacs.d/lisp/python-mode")
 
 
-;; ;; enable flycheck
-;; (add-hook 'after-init-hook #'global-flycheck-mode)
+;; (use-package pyvenv
+;;     :ensure t
+;;     :config
+;;     (pyvenv-mode t)
+;;     ;; set the correct interpreter
+;;     (setq pyvenv-post-activate-hooks
+;;           (list (lambda ()
+;;                   (setq python-shell-interpreter (concat pyvenv-virtual-env "bin/python3")))))
+;;     (setq pyvenv-post-deactivate-hooks
+;;           (list (lambda ()
+;;                   setq python-shell-interpreter "python3"))))
 
 
-;; =============================================================================
-;; = End python-mode related settings
-;; =============================================================================
+;; ;; ;; enable flycheck
+;; ;; (add-hook 'after-init-hook #'global-flycheck-mode)
+
+
+;; ;; =============================================================================
+;; ;; = End python-mode related settings
+;; ;; =============================================================================
+
+
+(use-package python-black
+    :demand t
+    :after Python
+    :hook (python-mode . python-black-on-save-mode-enable-dwim))
 
 (require 'auto-complete-config)
 (add-to-list 'ac-dictionary-directories "~/emacs.d/elpa/auto-complete*/dict")
@@ -256,6 +280,60 @@
 (require 'auto-complete)
 (global-auto-complete-mode t)
 
+(use-package auto-complete
+    :config (ac-flyspell-workaround))
+
+;; =============================================================================
+;; hide-show mode
+;; =============================================================================
+(require 'hideshow)
+
+(defvar-local hs-current-level 1
+  "currently hidden level of hideshow.")
+
+(defvar-local hs-prev-levek-active nil
+  "Deactivate `hs-hide-prev-level' when `hs-current-level' is 1.")
+
+(defvar-local hs-next-level-active t
+"Deactivate `hs-hide-next-level' when there are  no more hs overlays.")
+
+(defun hs-overlays-p (&optional ignore-comments)
+  "Return non-nil if there  are still hs-overlays.
+Ignore comments if IGNORE-COMMENTS is non-nil"
+  (let (ol)
+    (save-excursion
+      (goto-char (point-min))
+      (while (and (null (eobp))
+                  (null (and (setq ol (hs-overlay-at (goto-char (next-overlay-change (point)))))
+                             (or (null ignore-comments)
+                                 (null (eq overlay-get ol 'hs) 'comment))))))
+      (null (eobp)))))
+
+(defun hs-hide-prev-level ()
+  "Hide level `hs-current-level' -1."
+  (interactive)
+  (save-excursion
+    (goto-char (point-min))
+    (setq hs-current-level (max(1- hs-current-level) 1))
+    (hs-hide-level hs-current-level)))
+
+(defun hs-hide-next-level ()
+  "Hide level `hs-current-level' +1."
+  (interactive)
+  (save-excursion
+    (goto-char (point-min))
+    (setq hs-current-level (1+ hs-current-level ))
+    (hs-hide-level hs-current-level)))
+
+(define-key hs-minor-mode-map (kbd "C-c @ >") #'hs-hide-next-level)
+(define-key hs-minor-mode-map (kbd "C-c @ <") #'hs-hide-prev-level)
+
+(easy-menu-add-item hs-minor-mode-menu nil ["Hide previous level" hs-hide-prev-level (> hs-current-level 1)] "Toggle Hiding")
+(easy-menu-add-item hs-minor-mode-menu nil ["Hide next level" hs-hide-next-level (hs-overlays-p t)] "Toggle Hiding")
+
+;; =============================================================================
+;; end hideshow stuff
+;; =============================================================================
 
 ;; =============================================================================
 ;; xml mode stuff
@@ -449,13 +527,66 @@
 ;;  enable auto-fill-mode in org-mode
 (add-hook 'org-mode-hook 'turn-on-auto-fill)
 
+;; enable flyspell-mode in org-mode
+(add-hook 'org-mode-hook 'flyspell-mode t)
+
 ;; enable auto complete mode in org mode
 (add-hook 'org-mode-hook 'auto-complete-mode t)
 
-(org-babel-do-load-languages 'org-babel-load-languages '(
-                                                         (python . t)
-                                                         (ditaa . t))
-                             )
+(org-babel-do-load-languages
+ 'org-babel-load-languages
+   '(
+      (plantuml . t)
+     (python . t)
+     (ditaa . t)
+     )
+   )
+
+;; Enable plantuml-mode for PlantUML files
+(add-to-list 'auto-mode-alist '("\\.plantuml\\'" . plantuml-mode))
+
+;; integrate plantuml with org-mode
+(add-to-list 'org-src-lang-modes '("plantuml" . plantuml))
+
+(setq plantuml-default-exec-mode 'jar)
+(setq plantuml-executable-path "/usr/bin/plantuml")
+(setq plantuml-jar-path "/usr/share/java/plantuml.jar")
+(setq org-plantuml-jar-path "/usr/share/java/plantuml.jar")
+
+;;
+;; allow exporting to spreadsheets
+;;
+(defun abc/org-table-to-tsv ()
+  (interactive)
+  (let ((temp-buffer-name "*dump-buffer*"))
+    (org-mark-element)
+    (kill-ring-save nil nil 't)
+    (switch-to-buffer temp-buffer-name)
+    (yank)
+    (beginning-of-buffer)
+    (delete-char 2)
+    ;; remove the leading pipe char
+    (perform-replace "
+| " "
+" nil nil nil nil nil  (point-min) (point-max))
+    ;; remove trailing pipe char
+    (perform-replace " |
+" "
+" nil nil nil nil nil  (point-min) (point-max))
+    ;; remove internal pipe chars
+    (replace-regexp " +| " "	"
+                    nil (point-min) (point-max))
+    ;; remove terminal pipe char
+    (replace-regexp " +|
+" "
+"
+nil (point-min) (point-max))
+    ;; remove separators
+    (replace-regexp "^|-+.*
+" ""
+nil (point-min) (point-max))
+    (kill-ring-save (point-min) (point-max))
+    (kill-buffer temp-buffer-name)))
 
 
 ;; -----------------------------------------------------------------------------
@@ -464,39 +595,112 @@
 
 (defun org-babel-execute:yaml (body params) body)
 
-
 ;; enable auto-fill-mode in latex mode
 (add-hook 'latex-mode-hook 'turn-on-auto-fill)
-
 
 ;; enable auto-fill-mode in text mode
 (add-hook 'text-mode-hook 'turn-on-auto-fill)
 
+;;;; ansible-lint
+;; compile regex for ansible-lint
+;; (require 'compile)
+;; (add-to-list 'compilation-error-regexp-alist
+;;              'yam)
+;; (add-to-list 'compilation-error-regexp-alist-alist
+;;              '(yaml "^\\(.*?\\)):\\([0-9]+\\)" 1 2)
+;;              )
+
+;; replace make -k with ansible-lint, with an UTF-8 locale to avoid craches
+(defun ansible-lint-errors()
+  (make-local-variable 'compile-command)
+  (let ((ansible-lint-command "ansible-lint ")(loc "LANG=C.UTF-8 "))
+    (setq compile-command (concat loc ansible-lint-command buffer-file-name)))
+  )
 
 ;; yaml-mode
 (require 'yaml-mode)
 (add-to-list 'auto-mode-alist '("\\.yml\\'" . yaml-mode))
+
+(defun my-yaml-mode-hooks ()
+  "Add all the customisations for yaml-mode here"
+  (define-key yaml-mode-map "\C-m" 'newline-and-indent)
+  (set-fill-column 9999)
+  (auto-complete-mode t)
+  (setq ac-yaml 'ac-source-yaml)
+  (ansible 1)
+  (ansible-lint-errors)
+  )
+
+
 (add-hook 'yaml-mode-hook
-          '(lambda()
-             (define-key yaml-mode-map "\C-m" 'newline-and-indent)))
-(add-hook 'yaml-mode-hook
-          '(lambda()
-             (auto-complete-mode t)
-             (setq ac-yaml 'ac-source-yaml)))
+          'my-yaml-mode-hooks)
+
+;; (add-hook 'yaml-mode-hook 'ansible-lint-errors)
+
+(global-set-key (kbd "<f5>") 'compile)
 
 ;; =============================================================================
-;; Additional set-up for encrypted yaml files ( ansible-vault-mode)
+;; Additional set-up for encrypted yaml files ( ansible-minor-mode)
 ;; =============================================================================
 ;; (setq ansible-vault--vault-id "erwin.baeyens@benerail.com")
-(setq ansible-vault--password-file "/home/exl217/git/operations/werner/vault/decrypt-vault")
+;; (setq ansible-vault--password-file "~/.config/.vault_pass.txt")
+(setq ansible-vault-password-file "~/.config/.vault_pass.txt")
 (add-hook 'ansible-hook 'ansible-auto-decrypt-encrypt)
+
+(global-set-key (kbd "C-c b") 'ansible-decrypt-buffer)
+(global-set-key (kbd "C-c g") 'ansible-encrypt-buffer)
+
+;; -----------------------------------------------------------------------------
+;; k8s-mode setup
+;; -----------------------------------------------------------------------------
+(require ' k8s-mode)
+(use-package k8s-mode
+    :ensure t
+    :hook (k8s-mode . yas-minor-mode))
+
+;; set indent offset
+(setq k8s-indent-offset 2)
+;; The site docs URL
+(setq k8s-site-docs-url "https://kubernetes.io/docs/reference/generated/kubernetes-api/")
+;; The defautl API version
+(setq k8s-site-docs-version "v1.3")
+;; The browser funtion to browse the docs site. Default is `browse-url-browser-function`
+(setq k8s-search-documentation-browser-function nil)
+; Should be a X11 browser
+;(setq k8s-search-documentation-browser-function (quote browse-url-firefox))
+
+
+
+;; =============================================================================
+;; Macro's
+;; =============================================================================
+
+(defalias 'capitalize-name
+   (kmacro "C-s - SPC n a m e : <return> C-f M-c C-n"))
+
+(global-set-key (kbd "<f6>") 'capitalize-name)
+
+(defalias 'ansible-builtin
+   (kmacro "a n s i b l e . b u i l t i n . C-e C-n"))
+(global-set-key (kbd "<f7>") 'ansible-builtin)
 
 
 ;; =============================================================================
 ;; Multiple cursor setup
 ;; =============================================================================
-;; (require 'multiple-cursors)                       
+;; (require 'multiple-cursors)
 ;; (global-set-key (kbd "C-c C-a") 'mc/mark-all-like-this)
+
+;; =============================================================================
+;; various functions
+;; =============================================================================
+(defun write-out-region ()
+  "function to writeout the current region to a file"
+  (interactive)
+  (write-region (region-beginning) (region-end)
+                (read-file-name "Save region to: " nil nil nil))
+  )
+
 
 
 ;; =============================================================================
@@ -646,7 +850,7 @@ This function assumes that you use Y for correct and N for wrong answers"
 ;; markdown mode setup
 ;; ===========================================================================
 (autoload 'markdown-mode "markdown-mode"
-  "Majoor mode for editing markdown files" t)
+  "Major mode for editing markdown files" t)
 (add-to-list 'auto-mode-alist '("\\.markdown\\'" . markdown-mode))
 (add-to-list 'auto-mode-alist '("\\.md\\'" . markdown-mode))
 
@@ -687,11 +891,42 @@ This function assumes that you use Y for correct and N for wrong answers"
      x-stretch-cursor t)
 
 
+;; =============================================================================
+;; vc-msg mode hook
+;; =============================================================================
+(defun vc-msg-hook-setup (vcs-typ commit-info)
+  ;; copy commit info id to clipboard
+  (message (froat " %s\n%s\n%s\n%s"
+                  (plist-get commit-info :id)
+                  (plist-get commit-info :author)
+                  (plist-get commit-info :author-time)
+                  (plist-get commit-info :author-summary))))
+(add-hook 'vc-msg-hook 'vc-msg-hook-setup)
+
+;; ________________________________________________________________________________
+;; format xml the easy way
+;;
+;; --------------------------------------------------------------------------------
+(defun format-xml()
+  (interactive)
+  (shell-command-on-region 1 (point-max) "xmllint --format -" (current-buffer) t))
+
+;; -----------------------------------------------------------------------------
+;;  format json the easy way
+;;
+;; -----------------------------------------------------------------------------
+(defun format-json()
+  (interactive)
+  (shell-command-on-region 1 (point-max) "jsonlint --format -" (current-buffer) t))
 
 ;; =============================================================================
 ;; set the default directory to use so that vterm works
 ;; =============================================================================
+(use-package vterm
+    :load-path "~/.emacs.d/elpa/vterm-20240102.1640")
+
 (setq default-directory "~/")
+(define-key vterm-mode-map (kbd "C-q") 'vterm-send-next-key)
 
 ;; (use-package math-preview
 ;;  :custom (math-preview-command "/usr/local/bin/math-preview"))
@@ -704,25 +939,34 @@ This function assumes that you use Y for correct and N for wrong answers"
  '(column-number-mode t)
  '(custom-safe-themes
    '("6876d0eb1bcef5ce6a71434d7c19a66a1a14378e22dce3b72b1fbc51aeb5e18d" default))
+ '(display-line-numbers-type 'relative)
  '(display-time-mode t)
  '(eudc-default-return-attributes 'all)
  '(eudc-server-hotlist '(("" . bbdb) ("ldap://pro-ipa-blo.psop.be" . ldap)))
  '(eudc-use-raw-directory-names t)
+ '(font-use-system-font t)
+ '(global-display-line-numbers-mode t)
+ '(k8s-indent-offset 2)
  '(markdown-command "/usr/bin/pandoc")
  '(nxml-slash-auto-complete-flag t)
  '(org-export-with-sub-superscripts '{})
+ '(org-safe-remote-resources
+   '("\\`https://www\\.cybertec-postgresql\\.com\\(?:/\\|\\'\\)"))
  '(package-selected-packages
-   '(cl-libify pyenv pyvenv vterm-toggle orgtbl-aggregate auto-complete-nxml html5-schema ## ansible-vault package-selected-packages
-               '(yasnippet yaml-mode web-mode typing time-ext tile swiper-helm swiper ssh-tunnels ssh-deploy ssh-config-mode ssh-agency ssh speed-type python-mode python powershell org-gnome org nlinum multiple-cursors mic-paren magit load-dir json-mode js2-mode jinja2-mode icicles gandalf-theme flymake-yaml flymake-python-pyflakes flymake-php flymake-json flycheck-pyflakes flycheck-pycheckers flycheck-phpstan flycheck datetime-format datetime counsel bison-mode auto-complete-exuberant-ctags auto-complet ac-rtags ac-php-core ac-php ac-html-csswatcher ac-html-angular ac-html ac-etags magit-popup with-editor treepy graphql git-commit ghub dash async highlight-indent-guides vala-snippets vala-mode flymake-vala yafolding keychain-environment ox-asciidoc adoc-mode dired-subtree markdown-mode markdownfmt markdown-toc markdown-preview-mode markdown-preview-eww markdown-mode+ projectile ace-window pyenv-mode ascii-art-to-unicode md-readme org-link-minor-mode helm-swoop ag wgrep-ag shackle autotetris-mode vterm aggressive-indent aggressive-fill-paragraph lua-mode flymake-lua ivy folding fold-this fold-dwim-org fold-dwim hideshow-org dash-functional dash-at-point latex-unicode-math-mode latex-preview-pane latex-pretty-symbols lorem-ipsum latex-math-preview cdlatex cobol-mode)))
- '(reb-re-syntax 'read)
+   '(ansible esup plantuml-mode wgrep dired-subtree k8s-mode vc-msg terraform-mode crontab-mode lsp-ui lsp-mode python-black cl-libify pyenv pyvenv vterm-toggle orgtbl-aggregate auto-complete-nxml html5-schema ## package-selected-packages
+             '(yasnippet yaml-mode web-mode typing time-ext tile swiper-helm swiper ssh-tunnels ssh-deploy ssh-config-mode ssh-agency ssh speed-type python-mode python powershell org-gnome org nlinum multiple-cursors mic-paren magit load-dir json-mode js2-mode jinja2-mode icicles gandalf-theme flymake-yaml flymake-python-pyflakes flymake-php flymake-json flycheck-pyflakes flycheck-pycheckers flycheck-phpstan flycheck datetime-format datetime counsel bison-mode auto-complete-exuberant-ctags auto-complet ac-rtags ac-php-core ac-php ac-html-csswatcher ac-html-angular ac-html ac-etags magit-popup with-editor treepy graphql git-commit ghub dash async highlight-indent-guides vala-snippets vala-mode flymake-vala yafolding keychain-environment ox-asciidoc adoc-mode dired-subtree markdown-mode markdownfmt markdown-toc markdown-preview-mode markdown-preview-eww markdown-mode+ projectile ace-window pyenv-mode ascii-art-to-unicode md-readme org-link-minor-mode helm-swoop ag wgrep-ag shackle autotetris-mode vterm aggressive-indent aggressive-fill-paragraph lua-mode flymake-lua ivy folding fold-this fold-dwim-org fold-dwim hideshow-org dash-functional dash-at-point latex-unicode-math-mode latex-preview-pane latex-pretty-symbols lorem-ipsum latex-math-preview cdlatex cobol-mode)))
+ '(plantuml-default-exec-mode 'jar t)
+ '(plantuml-executable-path "/usr/bin/plantuml" t)
+ '(plantuml-jar-path "/usr/share/java/plantuml.jar" t)
+ '(reb-re-syntax 'string)
  '(safe-local-variable-values '((conding . utf-8)))
  '(send-mail-function 'mailclient-send-it)
- '(show-paren-mode t)
  '(size-indication-mode t)
  '(sql-electric-stuff 'semicolon)
  '(sql-mysql-login-params '(user password server database port))
  '(sql-mysql-program "mysql" t)
- '(tool-bar-mode nil))
+ '(tool-bar-mode nil)
+ '(warning-suppress-types '((comp))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; For documentation, see https://github.com//DarthFennec.highlight-indent-guides
@@ -737,7 +981,7 @@ This function assumes that you use Y for correct and N for wrong answers"
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(default ((t (:family "Source Code Pro" :foundry "ADBO" :slant normal :weight normal :height 98 :width normal)))))
+ '(default ((t (:family "Source Code Pro" :foundry "ADBO" :slant normal :weight regular :height 128 :width normal)))))
 (put 'dired-find-alternate-file 'disabled nil)
 (put 'scroll-left 'disabled nil)
 
