@@ -32,7 +32,7 @@
 (load-theme 'wombat)
 
 ;; show the size of the file in kb, mb...
-(size-indication-mode t)
+(setq size-indication-mode t)
 
 ;; show line numbers
 (if (version< emacs-version "26.1")
@@ -60,22 +60,21 @@
 (setq initial-scratch-message nil)
 
 ;; show the column number in the status bar
-(column-number-mode t)
+(setq column-number-mode t)
 
 ;; syntax highlighting related
 (setq font-lock-maximum-decoration t)
-(global-font-lock-mode t)
+(setq global-font-lock-mode t)
 
 ;; match parentheses
-(show-paren-mode t)
-(electric-pair-mode t)
+(setq show-paren-mode t)
+(setq electric-pair-mode t)
 
 ;; minibuffer history
-
-(savehist-mode t)
+(setq savehist-mode t)
 
 ;; display the time in status line
-(display-time-mode t)
+(setq display-time-mode t)
 
 ;; alias y to yes and n to no
 (defalias 'yes-or-no-p 'y-or-n-p)
@@ -88,6 +87,10 @@
 ;;; dired stuff
 ;; make dired sort with directories on top
 (setq dired-listing-switches "-al --group-directories-first")
+;;; end of dired stuff
+
+;; no tabs see Silicon Valley S03E06
+(setq-default indent-tabs-mode nil)
 
 ;; untabify all files in a directory
 (defun untabyfy-marked-files ()
@@ -98,14 +101,13 @@
          (save-buffer)
          (kill-buffer nil)))
 
-;;; end of dired stuff
-
-;; no tabs
-(setq-default indent-tabs-mode nil)
-
-
-;; save the window layout a exit
+;; save the window layout at exit
 ;; (destktop-save-mode 1)
+
+;; =============================================================================
+;; frame-undelete-mode enabled
+;; =============================================================================
+(setq frame-undelete-mode t)
 
 ;; =============================================================================
 ;; make sure that new frames are getting focus
@@ -928,8 +930,30 @@ This function assumes that you use Y for correct and N for wrong answers"
 (setq default-directory "~/")
 (define-key vterm-mode-map (kbd "C-q") 'vterm-send-next-key)
 
-;; (use-package math-preview
-;;  :custom (math-preview-command "/usr/local/bin/math-preview"))
+(setq default-directory "~/")
+(define-key vterm-mode-map (kbd "C-q") 'vterm-send-next-key)
+
+(use-package math-preview
+    :custom (math-preview-command "/usr/local/bin/math-preview"))
+
+;; ===============================================================
+;; automagically recreate the *scratch* buffer
+;; ===============================================================
+(defun prepare-scratch-for-kill ()
+  (save-excursion
+    (set-buffer (get-buffer-create "*scratch*"))
+    (add-hook 'kill-buffer-query-functions
+              'kill-scratch-buffer t)))
+
+(defun kill-scratch-buffer ()
+  (let (kill-buffer-query-functions)
+    (kill-buffer (current-buffer)))
+  (prepare-scratch-for-kill)
+  nil)
+
+;; =============================================================================
+;; automagically generated part. Best if not touched
+;; =============================================================================
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
@@ -953,8 +977,9 @@ This function assumes that you use Y for correct and N for wrong answers"
  '(org-safe-remote-resources
    '("\\`https://www\\.cybertec-postgresql\\.com\\(?:/\\|\\'\\)"))
  '(package-selected-packages
-   '(ansible esup plantuml-mode wgrep dired-subtree k8s-mode vc-msg terraform-mode crontab-mode lsp-ui lsp-mode python-black cl-libify pyenv pyvenv vterm-toggle orgtbl-aggregate auto-complete-nxml html5-schema ## package-selected-packages
-             '(yasnippet yaml-mode web-mode typing time-ext tile swiper-helm swiper ssh-tunnels ssh-deploy ssh-config-mode ssh-agency ssh speed-type python-mode python powershell org-gnome org nlinum multiple-cursors mic-paren magit load-dir json-mode js2-mode jinja2-mode icicles gandalf-theme flymake-yaml flymake-python-pyflakes flymake-php flymake-json flycheck-pyflakes flycheck-pycheckers flycheck-phpstan flycheck datetime-format datetime counsel bison-mode auto-complete-exuberant-ctags auto-complet ac-rtags ac-php-core ac-php ac-html-csswatcher ac-html-angular ac-html ac-etags magit-popup with-editor treepy graphql git-commit ghub dash async highlight-indent-guides vala-snippets vala-mode flymake-vala yafolding keychain-environment ox-asciidoc adoc-mode dired-subtree markdown-mode markdownfmt markdown-toc markdown-preview-mode markdown-preview-eww markdown-mode+ projectile ace-window pyenv-mode ascii-art-to-unicode md-readme org-link-minor-mode helm-swoop ag wgrep-ag shackle autotetris-mode vterm aggressive-indent aggressive-fill-paragraph lua-mode flymake-lua ivy folding fold-this fold-dwim-org fold-dwim hideshow-org dash-functional dash-at-point latex-unicode-math-mode latex-preview-pane latex-pretty-symbols lorem-ipsum latex-math-preview cdlatex cobol-mode)))
+   '(math-preview ansible esup plantuml-mode wgrep dired-subtree k8s-mode vc-msg terraform-mode crontab-mode lsp-ui lsp-mode python-black cl-libify pyenv pyvenv vterm-toggle orgtbl-aggregate auto-complete-nxml html5-schema ## package-selected-packages
+                  '(yasnippet yaml-mode web-mode typing time-ext tile swiper-helm swiper ssh-tunnels ssh-deploy ssh-config-mode ssh-agency ssh speed-type python-mode python powershell org-gnome org nlinum multiple-cursors mic-paren magit load-dir json-mode js2-mode jinja2-mode icicles gandalf-theme flymake-yaml flymake-python-pyflakes flymake-php flymake-json flycheck-pyflakes flycheck-pycheckers flycheck-phpstan flycheck datetime-format datetime counsel bison-mode auto-complete-exuberant-ctags auto-complet ac-rtags ac-php-core ac-php ac-html-csswatcher ac-html-angular ac-html ac-etags magit-popup with-editor treepy graphql git-commit ghub dash async highlight-indent-guides vala-snippets vala-mode flymake-vala yafolding keychain-environment ox-asciidoc adoc-mode dired-subtree markdown-mode markdownfmt markdown-toc markdown-preview-mode markdown-preview-eww markdown-mode+ projectile ace-window pyenv-mode ascii-art-to-unicode md-readme org-link-minor-mode helm-swoop ag wgrep-ag shackle autotetris-mode vterm aggressive-indent aggressive-fill-paragraph lua-mode flymake-lua ivy folding fold-this fold-dwim-org fold-dwim hideshow-org dash-functional dash-at-point latex-unicode-math-mode latex-preview-pane latex-pretty-symbols lorem-ipsum latex-math-preview cdlatex cobol-mode)))
+ '(add undelete-frame-mode)
  '(plantuml-default-exec-mode 'jar t)
  '(plantuml-executable-path "/usr/bin/plantuml" t)
  '(plantuml-jar-path "/usr/share/java/plantuml.jar" t)
