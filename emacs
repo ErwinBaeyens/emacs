@@ -219,21 +219,6 @@
 (paren-activate)     ; activating
 
 
-;; =============================================================================
-;;
-;;  use shackle.  Shackle allows for setting rules how buffers should open in
-;;  new windows or reuse windows.
-;;
-;; =============================================================================
-(require 'use-package)
-(use-package shackle
-  :hook
-  (after-init . shackle-mode)
-  :custom
-  (shackle-rules '((help-mode :inhibit-window-quit t :same t)))
-  (shackle-select-reused-windows t))
-
-
 ;; ;; =============================================================================
 ;; ;;
 ;; ;; Begin python-mode related settings
