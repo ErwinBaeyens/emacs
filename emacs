@@ -475,9 +475,19 @@ Ignore comments if IGNORE-COMMENTS is non-nil"
     ((lambda (x) (concat (substring x 0 3) ":" (substring x 3 5)))
      (format-time-string "%z")))))
 
+(defun epoch-to-datetime ()
+  "Convert the selection to datetime"
+  (interactive)
+  (let* ((epoch (string-to-number (buffer-substring (mark) (point))))
+         (datetime (format-time-string "%Y/%m/%d %H:%M:%S" (seconds-to-time epoch))))
+    (delete-region (mark) (point))
+    (insert datetime)))
+
+
 
 (global-set-key "\C-cd" 'insert-current-date-time)
 (global-set-key "\C-ct" 'insert-current-time)
+(global-set-key "\C-ce" 'epoch-to-datetime)
 
 
 ;; ;; =============================================================================
