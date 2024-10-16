@@ -68,7 +68,7 @@
 
 ;; match parentheses
 (setq show-paren-mode t)
-(setq electric-pair-mode t)
+(electric-pair-mode)
 
 ;; minibuffer history
 (setq savehist-mode t)
