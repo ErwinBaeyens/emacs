@@ -1,4 +1,4 @@
-;; -*- mode: lisp;  fill-column: 75; comment-column: 50; -*-
+;; -*- Mode: lisp;  fill-column: 75; comment-column: 50; -*-
 ;; .emacs.el
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -462,9 +462,7 @@ Ignore comments if IGNORE-COMMENTS is non-nil"
 (defun insert-current-time()
   "insert the current weekday and time at point."
   (interactive)
-  (format-time-string "%H:%M:%S")
-  (setq current-time-format "%H:%M:%S")
-  (insert (format-time-string current-time-format(current-time))))
+  (insert (format-time-string "%H:%M:%S" )))
 
 (defun insert-current-date-time()
   "insert the current date and time at point."
@@ -484,7 +482,6 @@ Ignore comments if IGNORE-COMMENTS is non-nil"
     (delete-region (mark) (point))
     (insert datetime)))
 
-2024-10-16T12:46:47+02:00
 
 (global-set-key "\C-cd" 'insert-current-date-time)
 (global-set-key "\C-ct" 'insert-current-time)
@@ -956,6 +953,7 @@ This function assumes that you use Y for correct and N for wrong answers"
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
+ '(add undelete-frame-mode)
  '(column-number-mode t)
  '(custom-safe-themes
    '("6876d0eb1bcef5ce6a71434d7c19a66a1a14378e22dce3b72b1fbc51aeb5e18d" default))
@@ -975,7 +973,6 @@ This function assumes that you use Y for correct and N for wrong answers"
  '(package-selected-packages
    '(math-preview ansible esup plantuml-mode wgrep dired-subtree k8s-mode vc-msg terraform-mode crontab-mode lsp-ui lsp-mode python-black cl-libify pyenv pyvenv vterm-toggle orgtbl-aggregate auto-complete-nxml html5-schema ## package-selected-packages
                   '(yasnippet yaml-mode web-mode typing time-ext tile swiper-helm swiper ssh-tunnels ssh-deploy ssh-config-mode ssh-agency ssh speed-type python-mode python powershell org-gnome org nlinum multiple-cursors mic-paren magit load-dir json-mode js2-mode jinja2-mode icicles gandalf-theme flymake-yaml flymake-python-pyflakes flymake-php flymake-json flycheck-pyflakes flycheck-pycheckers flycheck-phpstan flycheck datetime-format datetime counsel bison-mode auto-complete-exuberant-ctags auto-complet ac-rtags ac-php-core ac-php ac-html-csswatcher ac-html-angular ac-html ac-etags magit-popup with-editor treepy graphql git-commit ghub dash async highlight-indent-guides vala-snippets vala-mode flymake-vala yafolding keychain-environment ox-asciidoc adoc-mode dired-subtree markdown-mode markdownfmt markdown-toc markdown-preview-mode markdown-preview-eww markdown-mode+ projectile ace-window pyenv-mode ascii-art-to-unicode md-readme org-link-minor-mode helm-swoop ag wgrep-ag shackle autotetris-mode vterm aggressive-indent aggressive-fill-paragraph lua-mode flymake-lua ivy folding fold-this fold-dwim-org fold-dwim hideshow-org dash-functional dash-at-point latex-unicode-math-mode latex-preview-pane latex-pretty-symbols lorem-ipsum latex-math-preview cdlatex cobol-mode)))
- '(add undelete-frame-mode)
  '(plantuml-default-exec-mode 'jar t)
  '(plantuml-executable-path "/usr/bin/plantuml" t)
  '(plantuml-jar-path "/usr/share/java/plantuml.jar" t)
