@@ -462,8 +462,8 @@ Ignore comments if IGNORE-COMMENTS is non-nil"
 (defun insert-current-time()
   "insert the current weekday and time at point."
   (interactive)
-  (format-time-string "%z")
-  (current-time-format "%z")
+  (format-time-string "%H:%M:%S")
+  (setq current-time-format "%H:%M:%S")
   (insert (format-time-string current-time-format(current-time))))
 
 (defun insert-current-date-time()
@@ -475,6 +475,7 @@ Ignore comments if IGNORE-COMMENTS is non-nil"
     ((lambda (x) (concat (substring x 0 3) ":" (substring x 3 5)))
      (format-time-string "%z")))))
 
+
 (defun epoch-to-datetime ()
   "Convert the selection to datetime"
   (interactive)
@@ -483,11 +484,11 @@ Ignore comments if IGNORE-COMMENTS is non-nil"
     (delete-region (mark) (point))
     (insert datetime)))
 
-
+2024-10-16T12:46:47+02:00
 
 (global-set-key "\C-cd" 'insert-current-date-time)
 (global-set-key "\C-ct" 'insert-current-time)
-(global-set-key "\C-ce" 'epoch-to-datetime)
+(global-set-key "\C-cu" 'epoch-to-datetime)
 
 
 ;; ;; =============================================================================
