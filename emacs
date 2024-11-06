@@ -1,4 +1,4 @@
-;; -*- Mode: lisp;  fill-column: 75; comment-column: 50; -*-
+;; -*- Mode: lisp;  fill-column: 75; comment-column: 50; lexical-binding: t; -*-
 ;; .emacs.el
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -85,31 +85,34 @@
 ;; show trailing whitespace
 (setq show-trailing-whitespace 1)
 ;;; dired stuff
-;; make dired sort with directories on top
-(setq dired-listing-switches "-al --group-directories-first")
-(setq dired-dwin-target t)
-(define-key dired-mode-map "e" 'ora-ediff-files)
-;; ediff marked files in dired
-;; -** lexcal-binding: t -*-
 (defun ora-ediff-files ()
   (interactive)
   (let ((files (dired-get-marked-files))
-        (wnd (current-window-configuration)))
-    (if (<= (length files ) 2)
-        (let ((file1 (car files))
-              (file2 (if (cdr files)
-                         (cadr files)
-                         (read-file-name
-                          "file: "
-                          (dired-dwin-target-directory)))))
-          (if (file-newer-than-file-p file1 file2)
-              (ediff-files file2 file1)
-          (ediff-files file1 file2))
-        (add-hook 'ediff-after-quit-hook-internal
-        (lambda ()
-          (setq ediff-after-quit-hook-internal nil)
-          (set-window-configuration wnd))))
-    (error "no more than 2 files should be marked"))))
+	(wnd (current-window-configuration)))
+    (if (<= (length files) 2)
+	(let ((file1 (car files))
+	      (file2 (if (cdr files)
+			 (cadr files)
+			 (read-file-name
+			  "file: "
+			  (dired-dwin-target-directory)))))
+	  (if (file-newer-than-file-p file1 file2)
+	      (ediff-files file2 file1)
+	      (ediff-files file1 file1))
+	  (add-hook 'ediff-after-quit-hook-internal
+		    (lambda ()
+		      (setq ediff-after-quit-hook-internal nil)
+		      (set-window-configuration wnd ))))
+	(error "No more than 2 files should be marked"))))
+
+
+(defun my-dired-mode-hooks ()
+  "set all customisation for dired-mode"
+  (setq dired-listing-switches "-al --group-directories-first")
+  (setq dired-dwim-target t)
+  (define-key dired-mode-map "e" 'ora-ediff-files))
+
+(add-hook 'dired-mode-hook 'my-dired-mode-hooks)
 
 ;;; end of dired stuff
 
@@ -210,7 +213,7 @@
 (setq search-highlight t)
 
 ;; =============================================================================
-;; End of window and user interface functions 
+;; End of window and user interface functions
 ;; =============================================================================
 
 ;; =============================================================================
@@ -648,6 +651,7 @@ nil (point-min) (point-max))
   (setq ac-yaml 'ac-source-yaml)
   (ansible 1)
   (ansible-lint-errors)
+  (lsp-deferred)
   )
 
 
@@ -812,6 +816,8 @@ This function assumes that you use Y for correct and N for wrong answers"
                 (setq indent-tabs-mode t)
                 (setq show-trailing-whitespace t)
                 (c-set-style "linux-tabs-only")))))
+(add-hook 'c-mode-hook #'lsp)
+
 
 (require 'wgrep)
 
@@ -995,8 +1001,8 @@ This function assumes that you use Y for correct and N for wrong answers"
  '(org-safe-remote-resources
    '("\\`https://www\\.cybertec-postgresql\\.com\\(?:/\\|\\'\\)"))
  '(package-selected-packages
-   '(math-preview ansible esup plantuml-mode wgrep dired-subtree k8s-mode vc-msg terraform-mode crontab-mode lsp-ui lsp-mode python-black cl-libify pyenv pyvenv vterm-toggle orgtbl-aggregate auto-complete-nxml html5-schema ## package-selected-packages
-                  '(yasnippet yaml-mode web-mode typing time-ext tile swiper-helm swiper ssh-tunnels ssh-deploy ssh-config-mode ssh-agency ssh speed-type python-mode python powershell org-gnome org nlinum multiple-cursors mic-paren magit load-dir json-mode js2-mode jinja2-mode icicles gandalf-theme flymake-yaml flymake-python-pyflakes flymake-php flymake-json flycheck-pyflakes flycheck-pycheckers flycheck-phpstan flycheck datetime-format datetime counsel bison-mode auto-complete-exuberant-ctags auto-complet ac-rtags ac-php-core ac-php ac-html-csswatcher ac-html-angular ac-html ac-etags magit-popup with-editor treepy graphql git-commit ghub dash async highlight-indent-guides vala-snippets vala-mode flymake-vala yafolding keychain-environment ox-asciidoc adoc-mode dired-subtree markdown-mode markdownfmt markdown-toc markdown-preview-mode markdown-preview-eww markdown-mode+ projectile ace-window pyenv-mode ascii-art-to-unicode md-readme org-link-minor-mode helm-swoop ag wgrep-ag shackle autotetris-mode vterm aggressive-indent aggressive-fill-paragraph lua-mode flymake-lua ivy folding fold-this fold-dwim-org fold-dwim hideshow-org dash-functional dash-at-point latex-unicode-math-mode latex-preview-pane latex-pretty-symbols lorem-ipsum latex-math-preview cdlatex cobol-mode)))
+   '(lsp-docker lsp-jedi flycheck-yamllint math-preview ansible esup plantuml-mode wgrep dired-subtree k8s-mode vc-msg terraform-mode crontab-mode lsp-ui lsp-mode python-black cl-libify pyenv pyvenv vterm-toggle orgtbl-aggregate auto-complete-nxml html5-schema ## package-selected-packages
+                '(yasnippet yaml-mode web-mode typing time-ext tile swiper-helm swiper ssh-tunnels ssh-deploy ssh-config-mode ssh-agency ssh speed-type python-mode python powershell org-gnome org nlinum multiple-cursors mic-paren magit load-dir json-mode js2-mode jinja2-mode icicles gandalf-theme flymake-yaml flymake-python-pyflakes flymake-php flymake-json flycheck-pyflakes flycheck-pycheckers flycheck-phpstan flycheck datetime-format datetime counsel bison-mode auto-complete-exuberant-ctags auto-complet ac-rtags ac-php-core ac-php ac-html-csswatcher ac-html-angular ac-html ac-etags magit-popup with-editor treepy graphql git-commit ghub dash async highlight-indent-guides vala-snippets vala-mode flymake-vala yafolding keychain-environment ox-asciidoc adoc-mode dired-subtree markdown-mode markdownfmt markdown-toc markdown-preview-mode markdown-preview-eww markdown-mode+ projectile ace-window pyenv-mode ascii-art-to-unicode md-readme org-link-minor-mode helm-swoop ag wgrep-ag shackle autotetris-mode vterm aggressive-indent aggressive-fill-paragraph lua-mode flymake-lua ivy folding fold-this fold-dwim-org fold-dwim hideshow-org dash-functional dash-at-point latex-unicode-math-mode latex-preview-pane latex-pretty-symbols lorem-ipsum latex-math-preview cdlatex cobol-mode)))
  '(plantuml-default-exec-mode 'jar t)
  '(plantuml-executable-path "/usr/bin/plantuml" t)
  '(plantuml-jar-path "/usr/share/java/plantuml.jar" t)
@@ -1006,7 +1012,7 @@ This function assumes that you use Y for correct and N for wrong answers"
  '(size-indication-mode t)
  '(sql-electric-stuff 'semicolon)
  '(sql-mysql-login-params '(user password server database port))
- '(sql-mysql-program "mysql" t)
+ '(sql-mysql-program "mysql")
  '(tool-bar-mode nil)
  '(warning-suppress-types '((comp))))
 
