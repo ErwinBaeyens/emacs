@@ -137,16 +137,6 @@
 ;; =============================================================================
 (setq frame-undelete-mode t)
 
-;; =============================================================================
-;; make sure that new frames are getting focus
-;; =============================================================================
-(defun focus-new-client-frame()
-  (select-frame-set-input-focus (selected-frame)))
-
-(add-hook 'server-after-make-frame-hook #'focus-new-client-frame)
-;; ==========================================================================
-;; word and line wrapping settings mostly seen from doom emacs
-;; ==========================================================================
 
 ;; continue words ast whitespace, instead of in the middle of a word.
 (setq-default words-wrap t)
@@ -642,10 +632,7 @@ nil (point-min) (point-max))
 
 ;; yaml-mode
 (require 'yaml-mode)
-(add-to-list
-     'auto-mode-alist
-         '("\\.yml\\'" . yaml-mode)
-         '("\\.yaml\\'" . yaml-mode-map))
+(add-to-list 'auto-mode-alist '("\\.yml\\'" . yaml-mode))
 
 (defun my-yaml-mode-hooks ()
   "Add all the customisations for yaml-mode here"
@@ -658,8 +645,11 @@ nil (point-min) (point-max))
   (lsp-deferred)
   )
 
+
 (add-hook 'yaml-mode-hook
           'my-yaml-mode-hooks)
+
+;; (add-hook 'yaml-mode-hook 'ansible-lint-errors)
 
 (global-set-key (kbd "<f5>") 'compile)
 
@@ -757,18 +747,33 @@ nil (point-min) (point-max))
 (add-to-list 'auto-mode-alist '("\\.j2\\'" . web-mode))
 (add-to-list 'auto-mode-alist '("\\.js\\'" . web-mode))
 
-(defun my-web-mode-hook ()
+(defun web-mode-hook ()
   "Hooks for webmode."
   (setq-default web-mode-enable-auto-indentation t)
   (setq-default web-mode-markup-indent-offset 2 )  ;; html offset
   (setq-default web-mode-css-indent-offset 2 )     ;; css offset
   (setq-default web-mode-code-indent-offset 2))
 
-(add-hook 'web-mode-hook 'my-web-mode-hook)
+(add-hook 'web-mode-hook 'web-mode-hook)
 
 ;; =============================================================================
 ;; end web-mode
 ;; =============================================================================
+
+(defun calculate-test-result()
+  "Calculate test result.
+This function assumes that you use Y for correct and N for wrong answers"
+  (interactive)
+  (let* ((correct (how-many "[yY]\$" 1))
+         (wrong (how-many "[nNX]\$" 1))
+         (total (+ correct wrong))
+         (percentage (/ (* 100.0 correct)
+                        total)))
+    (message (concat "Your test score percentage: "
+                     (number-to-string percentage)))))
+
+(global-set-key (kbd "<f12>") 'calculate-test-result)
+
 
 ;; =============================================================================
 ;; just a try for c-mode
@@ -804,22 +809,8 @@ nil (point-min) (point-max))
                 (c-set-style "linux-tabs-only")))))
 (add-hook 'c-mode-hook #'lsp)
 
-;; =============================================================================
-;; wgrep mode
-;; =============================================================================
+
 (require 'wgrep)
-
-;;  - C-c C-e: Apply the changes to file buffers.
-;;  - C-c C-u: All changes are unmarked and ignored.
-;;  - C-c C-d: Mark as delete to current line (including newline).
-;;  - C-c C-r: Remove the changes in the region (these changes are not
-;;    applied to the files. Of course, the remaining changes can still be
-;;    applied to the files.) - C-c C-p: Toggle read-only area.
-;;  - C-c C-k: Discard all changes and exit.
-;;  - C-x C-q: Exit wgrep mode.
-
-;; (setq wgrep-auto-save-buffer)
-;; (setq wgrep-enable-key "r")
 
 ;; =============================================================================
 ;; ibuffer mode
