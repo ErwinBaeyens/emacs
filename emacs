@@ -31,6 +31,11 @@
 ;; load a theme
 (load-theme 'wombat)
 
+;; syntax highlighting related
+(setq font-lock-maximum-decoration t)
+(setq global-font-lock-mode t)
+(font-lock-fontify-buffer)
+
 ;; show the size of the file in kb, mb...
 (setq size-indication-mode t)
 
@@ -43,15 +48,15 @@
 
 ;; change the look of the linenubers
 (add-hook 'display-line-numbers-mode-hook
-	  (lambda ()
+          (lambda ()
             (setq display-line-numbers-type 'relative)
-	    (set-face-attribute 'line-number nil
-				:weight 'normal)
-	    (set-face-attribute 'line-number-current-line nil
-				:foreground (face-attribute 'cursor :background)
-				:weight 'bold
+            (set-face-attribute 'line-number nil
+                                :weight 'normal)
+            (set-face-attribute 'line-number-current-line nil
+                                :foreground (face-attribute 'cursor :background)
+                                :weight 'bold
                                 :background "light sky blue"
-				:slant 'normal)))
+                                :slant 'normal)))
 
 
 
@@ -61,10 +66,6 @@
 
 ;; show the column number in the status bar
 (setq column-number-mode t)
-
-;; syntax highlighting related
-(setq font-lock-maximum-decoration t)
-(setq global-font-lock-mode t)
 
 ;; match parentheses
 (setq show-paren-mode t)
@@ -89,22 +90,22 @@
 (defun ora-ediff-files ()
   (interactive)
   (let ((files (dired-get-marked-files))
-	(wnd (current-window-configuration)))
+        (wnd (current-window-configuration)))
     (if (<= (length files) 2)
-	(let ((file1 (car files))
-	      (file2 (if (cdr files)
-			 (cadr files)
-			 (read-file-name
-			  "file: "
-			  (dired-dwin-target-directory)))))
-	  (if (file-newer-than-file-p file1 file2)
-	      (ediff-files file2 file1)
-	      (ediff-files file1 file1))
-	  (add-hook 'ediff-after-quit-hook-internal
-		    (lambda ()
-		      (setq ediff-after-quit-hook-internal nil)
-		      (set-window-configuration wnd ))))
-	(error "No more than 2 files should be marked"))))
+        (let ((file1 (car files))
+              (file2 (if (cdr files)
+                         (cadr files)
+                         (read-file-name
+                          "file: "
+                          (dired-dwin-target-directory)))))
+          (if (file-newer-than-file-p file1 file2)
+              (ediff-files file2 file1)
+              (ediff-files file1 file1))
+          (add-hook 'ediff-after-quit-hook-internal
+                    (lambda ()
+                      (setq ediff-after-quit-hook-internal nil)
+                      (set-window-configuration wnd ))))
+        (error "No more than 2 files should be marked"))))
 
 
 (defun my-dired-mode-hooks ()
@@ -163,12 +164,12 @@
 ;; set up the  load-path
 (let ((default-directory  "~/.emacs.d/lisp"))
   (setq load-path
-	(append
-	 (let ((load-path (copy-sequence load-path)))
-	   (append
-	    (copy-sequence (normal-top-level-add-to-load-path'(".")))
-	    (normal-top-level-add-subdirs-to-load-path)))
-	 load-path)))
+        (append
+         (let ((load-path (copy-sequence load-path)))
+           (append
+            (copy-sequence (normal-top-level-add-to-load-path'(".")))
+            (normal-top-level-add-subdirs-to-load-path)))
+         load-path)))
 
 (add-to-list 'exec-path "/usr/bin/")
 (setenv "PATH" (mapconcat 'identity exec-path ":"))
@@ -222,7 +223,7 @@
 ;; =============================================================================
 (require 'package)
 (add-to-list 'package-archives
-	     '("melpa" . "https://melpa.org/packages/")
+             '("melpa" . "https://melpa.org/packages/")
              '("org" . "https://orgmode.org/elpa/"))
 ;; (package-initialize)
 
@@ -393,16 +394,16 @@ Ignore comments if IGNORE-COMMENTS is non-nil"
   (interactive)
   (require 'tramp)
   (let* (;; we bind the variable `file-name-history' locally so we can
-	 ;; use a separate history list for, "root" files.
- 	 (file-name-history find-file-root-history)
-	 (name (or buffer-file-name default-directory))
-	 (tramp (and (tramp-tramp-file-p name)
-		     (tramp-dissect-file-name name)))
-	 path dir file)
+         ;; use a separate history list for, "root" files.
+         (file-name-history find-file-root-history)
+         (name (or buffer-file-name default-directory))
+         (tramp (and (tramp-tramp-file-p name)
+                     (tramp-dissect-file-name name)))
+         path dir file)
     ;; If called from a "root" file, we need to fix up the path.
     (when tramp
       (setq path (tramp-file-name-localname tramp)
-	    dir (file-name-directory path)))
+            dir (file-name-directory path)))
 
     (when (setq file (read-file-name "Find file(UID = 0): " dir path))
       (find-file (concat find-file-root-prefix file))
@@ -597,7 +598,7 @@ Ignore comments if IGNORE-COMMENTS is non-nil"
 " "
 " nil nil nil nil nil  (point-min) (point-max))
     ;; remove internal pipe chars
-    (replace-regexp " +| " "	"
+    (replace-regexp " +| " "    "
                     nil (point-min) (point-max))
     ;; remove terminal pipe char
     (replace-regexp " +|
@@ -818,8 +819,8 @@ nil (point-min) (point-max))
 ;;  - C-c C-k: Discard all changes and exit.
 ;;  - C-x C-q: Exit wgrep mode.
 
-;; (setq wgrep-auto-save-buffer)
-;; (setq wgrep-enable-key "r")
+(setq wgrep-auto-save-buffer t)
+(setq wgrep-enable-key "r")
 
 ;; =============================================================================
 ;; ibuffer mode
@@ -956,9 +957,6 @@ nil (point-min) (point-max))
 (setq default-directory "~/")
 (define-key vterm-mode-map (kbd "C-q") 'vterm-send-next-key)
 
-(use-package math-preview
-    :custom (math-preview-command "/usr/local/bin/math-preview"))
-
 ;; ===============================================================
 ;; automagically recreate the *scratch* buffer
 ;; ===============================================================
@@ -992,7 +990,6 @@ nil (point-min) (point-max))
  '(eudc-default-return-attributes 'all)
  '(eudc-server-hotlist '(("" . bbdb) ("ldap://pro-ipa-blo.psop.be" . ldap)))
  '(eudc-use-raw-directory-names t)
- '(font-use-system-font t)
  '(global-display-line-numbers-mode t)
  '(k8s-indent-offset 2)
  '(markdown-command "/usr/bin/pandoc")
@@ -1001,8 +998,38 @@ nil (point-min) (point-max))
  '(org-safe-remote-resources
    '("\\`https://www\\.cybertec-postgresql\\.com\\(?:/\\|\\'\\)"))
  '(package-selected-packages
-   '(lsp-docker lsp-jedi flycheck-yamllint math-preview ansible esup plantuml-mode wgrep dired-subtree k8s-mode vc-msg terraform-mode crontab-mode lsp-ui lsp-mode python-black cl-libify pyenv pyvenv vterm-toggle orgtbl-aggregate auto-complete-nxml html5-schema ## package-selected-packages
-                '(yasnippet yaml-mode web-mode typing time-ext tile swiper-helm swiper ssh-tunnels ssh-deploy ssh-config-mode ssh-agency ssh speed-type python-mode python powershell org-gnome org nlinum multiple-cursors mic-paren magit load-dir json-mode js2-mode jinja2-mode icicles gandalf-theme flymake-yaml flymake-python-pyflakes flymake-php flymake-json flycheck-pyflakes flycheck-pycheckers flycheck-phpstan flycheck datetime-format datetime counsel bison-mode auto-complete-exuberant-ctags auto-complet ac-rtags ac-php-core ac-php ac-html-csswatcher ac-html-angular ac-html ac-etags magit-popup with-editor treepy graphql git-commit ghub dash async highlight-indent-guides vala-snippets vala-mode flymake-vala yafolding keychain-environment ox-asciidoc adoc-mode dired-subtree markdown-mode markdownfmt markdown-toc markdown-preview-mode markdown-preview-eww markdown-mode+ projectile ace-window pyenv-mode ascii-art-to-unicode md-readme org-link-minor-mode helm-swoop ag wgrep-ag shackle autotetris-mode vterm aggressive-indent aggressive-fill-paragraph lua-mode flymake-lua ivy folding fold-this fold-dwim-org fold-dwim hideshow-org dash-functional dash-at-point latex-unicode-math-mode latex-preview-pane latex-pretty-symbols lorem-ipsum latex-math-preview cdlatex cobol-mode)))
+   '(lsp-docker lsp-jedi flycheck-yamllint math-preview ansible esup plantuml-mode
+                wgrep dired-subtree k8s-mode vc-msg terraform-mode crontab-mode
+                lsp-ui lsp-mode python-black cl-libify pyenv pyvenv vterm-toggle
+                orgtbl-aggregate auto-complete-nxml html5-schema ##
+                package-selected-packages
+                '(yasnippet yaml-mode web-mode typing time-ext tile swiper-helm
+                            swiper ssh-tunnels ssh-deploy ssh-config-mode
+                            ssh-agency ssh speed-type python-mode python
+                            powershell org-gnome org nlinum multiple-cursors
+                            mic-paren magit load-dir json-mode js2-mode
+                            jinja2-mode icicles gandalf-theme flymake-yaml
+                            flymake-python-pyflakes flymake-php flymake-json
+                            flycheck-pyflakes flycheck-pycheckers
+                            flycheck-phpstan flycheck datetime-format datetime
+                            counsel bison-mode auto-complete-exuberant-ctags
+                            auto-complet ac-rtags ac-php-core ac-php
+                            ac-html-csswatcher ac-html-angular ac-html ac-etags
+                            magit-popup with-editor treepy graphql git-commit
+                            ghub dash async highlight-indent-guides
+                            vala-snippets vala-mode flymake-vala yafolding
+                            keychain-environment ox-asciidoc adoc-mode
+                            dired-subtree markdown-mode markdownfmt markdown-toc
+                            markdown-preview-mode markdown-preview-eww
+                            markdown-mode+ projectile ace-window pyenv-mode
+                            ascii-art-to-unicode md-readme org-link-minor-mode
+                            helm-swoop ag wgrep-ag shackle autotetris-mode vterm
+                            aggressive-indent aggressive-fill-paragraph lua-mode
+                            flymake-lua ivy folding fold-this fold-dwim-org
+                            fold-dwim hideshow-org dash-functional dash-at-point
+                            latex-unicode-math-mode latex-preview-pane
+                            latex-pretty-symbols lorem-ipsum latex-math-preview
+                            cdlatex cobol-mode)))
  '(plantuml-default-exec-mode 'jar t)
  '(plantuml-executable-path "/usr/bin/plantuml" t)
  '(plantuml-jar-path "/usr/share/java/plantuml.jar" t)
@@ -1012,7 +1039,7 @@ nil (point-min) (point-max))
  '(size-indication-mode t)
  '(sql-electric-stuff 'semicolon)
  '(sql-mysql-login-params '(user password server database port))
- '(sql-mysql-program "mysql")
+ '(sql-mysql-program "mysql" t)
  '(tool-bar-mode nil)
  '(warning-suppress-types '((comp))))
 
@@ -1029,7 +1056,7 @@ nil (point-min) (point-max))
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(default ((t (:family "Source Code Pro" :foundry "ADBO" :slant normal :weight regular :height 128 :width normal)))))
+ '(default ((t (:family "Cousine" :foundry "GOOG" :slant normal :weight regular :height 119 :width normal)))))
 (put 'dired-find-alternate-file 'disabled nil)
 (put 'scroll-left 'disabled nil)
 
