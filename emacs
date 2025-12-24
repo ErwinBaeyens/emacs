@@ -41,7 +41,7 @@
 
 ;; show line numbers
 (if (version< emacs-version "26.1")
-    (progn (global-linun-mode t))
+    (progn (global-linum-mode t))
     (progn (global-display-line-numbers-mode t))
     )
 ;; (global-display-line-numbers-mode t)
@@ -84,7 +84,7 @@
 (setq-default fill-column 80)
 
 ;; show trailing whitespace
-(setq show-trailing-whitespace 1)
+(setq show-trailing-whitespace t)
 
 ;;; dired stuff
 (defun ora-ediff-files ()
@@ -192,19 +192,12 @@
 (defun swap-windows()
   "If you have 2 windows it swaps them."
   (interactive)
-  (cond ((not (= (count-windows) 2)) (message "you need exactly 2 windows to do this."))
-        (t
-         (let* ((w1 (first (window-list)))
-                (w2 (second (window-list)))
-                (b1 (window-buffer w1))
-                (b2 (window-buffer w2))
-                (s1 (window-start w1))
-                (s2 (window-start w2)))
-           (set-window-buffer w1 b2)
-           (set-window-buffer w2 b1)
-           (set-window-start w1 s2)
-           (set-window-start w2 s1))))
-  )
+  (let* ((this (selected-window))
+         (other (next-window))
+         (this-buffer (window-buffer this)))
+    (set-window-buffer other this-buffer)
+    (set-window-buffer this other-buffer)))
+
 
 (global-set-key [C-tab] 'swap-windows)
 
@@ -246,58 +239,6 @@
 ;; =============================================================================
 (require 'mic-paren) ; loading
 (paren-activate)     ; activating
-
-
-;; ;; =============================================================================
-;; ;;
-;; ;; Begin python-mode related settings
-;; ;;
-;; ;; =============================================================================
-
-;; (require 'python-mode)
-;; (add-to-list 'auto-modalist '("\\.py\\'" . python-mode))
-;; (setq python-shell-interpreter '/usr/bin/python)
-;; (add-to-list 'load-path "~/.emacs.d/lisp/python-mode")
-;; (setq py-install-directory "~/.emacs.d/lisp/python-mode")
-
-
-;; (use-package pyvenv
-;;     :ensure t
-;;     :config
-;;     (pyvenv-mode t)
-;;     ;; set the correct interpreter
-;;     (setq pyvenv-post-activate-hooks
-;;           (list (lambda ()
-;;                   (setq python-shell-interpreter (concat pyvenv-virtual-env "bin/python3")))))
-;;     (setq pyvenv-post-deactivate-hooks
-;;           (list (lambda ()
-;;                   setq python-shell-interpreter "python3"))))
-
-
-;; ;; ;; enable flycheck
-;; ;; (add-hook 'after-init-hook #'global-flycheck-mode)
-
-
-;; ;; =============================================================================
-;; ;; = End python-mode related settings
-;; ;; =============================================================================
-
-
-(use-package python-black
-    :demand t
-    :after Python
-    :hook (python-mode . python-black-on-save-mode-enable-dwim))
-
-(require 'auto-complete-config)
-(add-to-list 'ac-dictionary-directories "~/emacs.d/elpa/auto-complete*/dict")
-(add-hook 'js2-mode-hook 'ac-js2-mode)
-
-
-(require 'auto-complete)
-(global-auto-complete-mode t)
-
-(use-package auto-complete
-    :config (ac-flyspell-workaround))
 
 ;; =============================================================================
 ;; hide-show mode
@@ -612,11 +553,6 @@ nil (point-min) (point-max))
     (kill-ring-save (point-min) (point-max))
     (kill-buffer temp-buffer-name)))
 
-
-;; -----------------------------------------------------------------------------
-;; End of org-mode config
-;; -----------------------------------------------------------------------------
-
 (defun org-babel-execute:yaml (body params) body)
 
 ;; enable auto-fill-mode in latex mode
@@ -625,28 +561,132 @@ nil (point-min) (point-max))
 ;; enable auto-fill-mode in text mode
 (add-hook 'text-mode-hook 'turn-on-auto-fill)
 
-;;;; ansible-lint
-;; compile regex for ansible-lint
-;; (require 'compile)
-;; (add-to-list 'compilation-error-regexp-alist
-;;              'yam)
-;; (add-to-list 'compilation-error-regexp-alist-alist
-;;              '(yaml "^\\(.*?\\)):\\([0-9]+\\)" 1 2)
-;;              )
+;; =============================================================================
+;; End of org-mode config
+;; =============================================================================
 
-;; replace make -k with ansible-lint, with an UTF-8 locale to avoid craches
-(defun ansible-lint-errors()
-  (make-local-variable 'compile-command)
-  (let ((ansible-lint-command "ansible-lint ")(loc "LANG=C.UTF-8 "))
-    (setq compile-command (concat loc ansible-lint-command buffer-file-name)))
+;; =============================================================================
+;;  basics for lsp-mode
+;; =============================================================================
+(use-package lsp-mode
+  :ensure t
+  :defer t
+  :hook (lsp-mode . (lambda ()
+                      (let ((lsp-keymap-prefix "C-c l"))
+                        (lsp-enable-which-key-integration))))
+  :init
+  (setq lsp-keep-workspace-alive nil
+        lsp-signature-doc-lines 5
+        lsp-idle-delay 0.5
+        lsp-prefer-capf t
+        lsp-client-packages nil)
+  :config
+  (define-key lsp-mode-map (kbd "C-c l") lsp-command-map))
+
+;; =============================================================================
+;; Begin python-mode related settings
+;; =============================================================================
+
+(require 'python-mode)
+(add-to-list 'auto-mode-alist '("\\.py\\'" . python-mode))
+(setq python-shell-interpreter '/usr/bin/python)
+(add-to-list 'load-path "~/.emacs.d/lisp/python-mode")
+(setq py-install-directory "~/.emacs.d/lisp/python-mode")
+
+
+(use-package Python
+    :hook
+  (python-mode . hs-minor-mode))
+
+
+(use-package pyvenv
+    :ensure t
+    :config
+    (pyvenv-mode t)
+    ;; set the correct interpreter
+    (setq pyvenv-post-activate-hooks
+          (list (lambda ()
+                  (setq python-shell-interpreter (concat pyvenv-virtual-env "bin/python3")))))
+    (setq pyvenv-post-deactivate-hooks
+          (list (lambda ()
+                  setq python-shell-interpreter "python3"))))
+
+
+;; ;; enable flycheck
+;; (add-hook 'after-init-hook #'global-flycheck-mode)
+
+(use-package python-black
+    :demand t
+    :after Python
+    :hook (python-mode . python-black-on-save-mode-enable-dwim))
+
+(require 'auto-complete-config)
+(add-to-list 'ac-dictionary-directories "~/emacs.d/elpa/auto-complete*/dict")
+(add-hook 'js2-mode-hook 'ac-js2-mode)
+
+
+(require 'auto-complete)
+(global-auto-complete-mode t)
+
+(use-package auto-complete
+    :config (ac-flyspell-workaround))
+
+(defun My-python-mode-hooks ()
+  "All the custom stuff for python in one place"
+  (define-key python-mode-map "C-m" 'newline-and-indent)
+  (set-fill-column 132)
+  (auto-complete-mode t)
+  (lsp-deferred)
+  (hs-minor-mode)
   )
 
+(add-hook 'python-mode-hook 'My-python-mode-hooks)
+
+;; =============================================================================
+;; Ansible-mode
+;; =============================================================================
+
+;;;; ansible-lint
+;; compile regex for ansible-lint
+(require 'compile)
+(add-to-list 'compilation-error-regexp-alist
+             'yaml)
+(add-to-list 'compilation-error-regexp-alist-alist
+             '(yaml "^\\(.*?\\)):\\([0-9]+\\)" 1 2)
+             )
+
+(add-hook 'yaml-mode-hook
+          (lambda ()
+            (setq-local compile-command
+                        (concat "ansible-lint --offline " (shell-quote-argument (buffer-file-name))))))
+
+
+(defun ansible-lint-errors ()
+  (interactive)
+  (when buffer-file-name ;; only set if buffer is associated with a file
+    (setq (ansible-lint-args '("LANG=C.UTF-8" "ansible-lint" "--offline")))
+    (setq-local compile-command
+                (concat
+                 (mapconcat 'identity ansible-lint-args " ")
+                 " "
+                 (shell-quote-argument buffer-file-name)))))
+
+(add-hook 'yaml-mode-hook #'ansible-lint-errors)
+
+;; =============================================================================
 ;; yaml-mode
+;; =============================================================================
 (require 'yaml-mode)
 (add-to-list
      'auto-mode-alist
          '("\\.yml\\'" . yaml-mode)
-         '("\\.yaml\\'" . yaml-mode-map))
+         '("\\.yaml\\'" . yaml-mode))
+
+(defun turn-on-ansible-mode()
+  (ansible-mode 1))
+
+(setq clean-up-file
+      (expand-file-name  "lisp/ansible_cleanup.el" user-emacs-directory))
 
 (defun my-yaml-mode-hooks ()
   "Add all the customisations for yaml-mode here"
@@ -654,15 +694,18 @@ nil (point-min) (point-max))
   (set-fill-column 9999)
   (auto-complete-mode t)
   (setq ac-yaml 'ac-source-yaml)
-  (ansible 1)
-  (ansible-lint-errors)
+  (turn-on-ansible-mode)
   (lsp-deferred)
+  (setq font-lock-mode t)
+  (display-line-numbers-mode)
+  (when (file-exists-p clean-up-file)
+        (load clean-up-file))
   )
 
 (add-hook 'yaml-mode-hook
           'my-yaml-mode-hooks)
 
-(global-set-key (kbd "<f5>") 'compile)
+;; (define-key yaml-mode-map (kbd "<f5>") 'ansible-lint-errors)
 
 ;; =============================================================================
 ;; Additional set-up for encrypted yaml files ( ansible-minor-mode)
@@ -675,9 +718,10 @@ nil (point-min) (point-max))
 (global-set-key (kbd "C-c b") 'ansible-decrypt-buffer)
 (global-set-key (kbd "C-c g") 'ansible-encrypt-buffer)
 
-;; -----------------------------------------------------------------------------
+
+;; =============================================================================
 ;; k8s-mode setup
-;; -----------------------------------------------------------------------------
+;; =============================================================================
 (require ' k8s-mode)
 (use-package k8s-mode
     :ensure t
@@ -740,36 +784,10 @@ nil (point-min) (point-max))
 (global-set-key (kbd "C-'") 'toggle-hiding)
 (global-set-key (kbd "C-=") 'toggle-selective-display)
 
-;; (add-hook 'php-mode-hook 'hs-minor-mode)
+
 (add-hook 'emacs-lisp-mode-hook 'hs-minor-mode)
 (add-hook 'sh-mode-hook 'hs-minor-mode)
-;; (add-hook 'web-mode-hook 'hs-minor-mode)
 
-
-;; =============================================================================
-;; enable web-mode for all associated files
-;; =============================================================================
-(require 'web-mode)
-(add-to-list 'auto-mode-alist '("\\.php\\'" . web-mode))
-(add-to-list 'auto-mode-alist '("\\.css\\'" . web-mode))
-(add-to-list 'auto-mode-alist '("\\.html\\'" . web-mode))
-(add-to-list 'auto-mode-alist '("\\.phtml\\'" . web-mode))
-(add-to-list 'auto-mode-alist '("\\.tpl\\'" . web-mode))
-(add-to-list 'auto-mode-alist '("\\.j2\\'" . web-mode))
-(add-to-list 'auto-mode-alist '("\\.js\\'" . web-mode))
-
-(defun my-web-mode-hook ()
-  "Hooks for webmode."
-  (setq-default web-mode-enable-auto-indentation t)
-  (setq-default web-mode-markup-indent-offset 2 )  ;; html offset
-  (setq-default web-mode-css-indent-offset 2 )     ;; css offset
-  (setq-default web-mode-code-indent-offset 2))
-
-(add-hook 'web-mode-hook 'my-web-mode-hook)
-
-;; =============================================================================
-;; end web-mode
-;; =============================================================================
 
 ;; =============================================================================
 ;; just a try for c-mode
@@ -916,7 +934,6 @@ nil (point-min) (point-max))
      x-select-request-type '(UTF8_STRING COMPOUND_TEXT TEXT STRING)
      x-stretch-cursor t)
 
-
 ;; =============================================================================
 ;; vc-msg mode hook
 ;; =============================================================================
@@ -931,16 +948,14 @@ nil (point-min) (point-max))
 
 ;; ________________________________________________________________________________
 ;; format xml the easy way
-;;
-;; --------------------------------------------------------------------------------
+;; =============================================================================---
 (defun format-xml()
   (interactive)
   (shell-command-on-region 1 (point-max) "xmllint --format -" (current-buffer) t))
 
-;; -----------------------------------------------------------------------------
+;; =============================================================================
 ;;  format json the easy way
-;;
-;; -----------------------------------------------------------------------------
+;; =============================================================================
 (defun format-json()
   (interactive)
   (shell-command-on-region 1 (point-max) "jsonlint --format -" (current-buffer) t))
@@ -985,57 +1000,62 @@ nil (point-min) (point-max))
  '(column-number-mode t)
  '(custom-safe-themes
    '("6876d0eb1bcef5ce6a71434d7c19a66a1a14378e22dce3b72b1fbc51aeb5e18d" default))
+ '(dired-listing-switches "-al --group-directories-first")
  '(display-line-numbers-type 'relative)
  '(display-time-mode t)
  '(eudc-default-return-attributes 'all)
  '(eudc-server-hotlist '(("" . bbdb) ("ldap://pro-ipa-blo.psop.be" . ldap)))
  '(eudc-use-raw-directory-names t)
  '(global-display-line-numbers-mode t)
+ '(global-whitespace-mode nil)
  '(k8s-indent-offset 2)
+ '(lsp-trim-trailing-whitespace nil)
+ '(lsp-warn-no-matched-clients nil)
  '(markdown-command "/usr/bin/pandoc")
  '(nxml-slash-auto-complete-flag t)
+ '(org-agenda-files nil)
  '(org-export-with-sub-superscripts '{})
  '(org-safe-remote-resources
    '("\\`https://www\\.cybertec-postgresql\\.com\\(?:/\\|\\'\\)"))
  '(package-selected-packages
-   '(lsp-docker lsp-jedi flycheck-yamllint math-preview ansible esup plantuml-mode
-                wgrep dired-subtree k8s-mode vc-msg terraform-mode crontab-mode
-                lsp-ui lsp-mode python-black cl-libify pyenv pyvenv vterm-toggle
-                orgtbl-aggregate auto-complete-nxml html5-schema ##
-                package-selected-packages
-                '(yasnippet yaml-mode web-mode typing time-ext tile swiper-helm
-                            swiper ssh-tunnels ssh-deploy ssh-config-mode
-                            ssh-agency ssh speed-type python-mode python
-                            powershell org-gnome org nlinum multiple-cursors
-                            mic-paren magit load-dir json-mode js2-mode
-                            jinja2-mode icicles gandalf-theme flymake-yaml
-                            flymake-python-pyflakes flymake-php flymake-json
-                            flycheck-pyflakes flycheck-pycheckers
-                            flycheck-phpstan flycheck datetime-format datetime
-                            counsel bison-mode auto-complete-exuberant-ctags
-                            auto-complet ac-rtags ac-php-core ac-php
-                            ac-html-csswatcher ac-html-angular ac-html ac-etags
-                            magit-popup with-editor treepy graphql git-commit
-                            ghub dash async highlight-indent-guides
-                            vala-snippets vala-mode flymake-vala yafolding
-                            keychain-environment ox-asciidoc adoc-mode
-                            dired-subtree markdown-mode markdownfmt markdown-toc
-                            markdown-preview-mode markdown-preview-eww
-                            markdown-mode+ projectile ace-window pyenv-mode
-                            ascii-art-to-unicode md-readme org-link-minor-mode
-                            helm-swoop ag wgrep-ag shackle autotetris-mode vterm
-                            aggressive-indent aggressive-fill-paragraph lua-mode
-                            flymake-lua ivy folding fold-this fold-dwim-org
-                            fold-dwim hideshow-org dash-functional dash-at-point
-                            latex-unicode-math-mode latex-preview-pane
-                            latex-pretty-symbols lorem-ipsum latex-math-preview
-                            cdlatex cobol-mode)))
+   '(minimap lsp-docker lsp-jedi flycheck-yamllint math-preview ansible esup
+             plantuml-mode wgrep dired-subtree k8s-mode vc-msg terraform-mode
+             crontab-mode lsp-ui lsp-mode python-black cl-libify pyenv pyvenv
+             vterm-toggle orgtbl-aggregate auto-complete-nxml html5-schema ##
+             package-selected-packages
+             '(yasnippet yaml-mode web-mode typing time-ext tile swiper-helm
+                         swiper ssh-tunnels ssh-deploy ssh-config-mode
+                         ssh-agency ssh speed-type python-mode python powershell
+                         org-gnome org nlinum multiple-cursors mic-paren magit
+                         load-dir json-mode js2-mode jinja2-mode icicles
+                         gandalf-theme flymake-yaml flymake-python-pyflakes
+                         flymake-php flymake-json flycheck-pyflakes
+                         flycheck-pycheckers flycheck-phpstan flycheck
+                         datetime-format datetime counsel bison-mode
+                         auto-complete-exuberant-ctags auto-complet ac-rtags
+                         ac-php-core ac-php ac-html-csswatcher ac-html-angular
+                         ac-html ac-etags magit-popup with-editor treepy graphql
+                         git-commit ghub dash async highlight-indent-guides
+                         vala-snippets vala-mode flymake-vala yafolding
+                         keychain-environment ox-asciidoc adoc-mode
+                         dired-subtree markdown-mode markdownfmt markdown-toc
+                         markdown-preview-mode markdown-preview-eww
+                         markdown-mode+ projectile ace-window pyenv-mode
+                         ascii-art-to-unicode md-readme org-link-minor-mode
+                         helm-swoop ag wgrep-ag shackle autotetris-mode vterm
+                         aggressive-indent aggressive-fill-paragraph lua-mode
+                         flymake-lua ivy folding fold-this fold-dwim-org
+                         fold-dwim hideshow-org dash-functional dash-at-point
+                         latex-unicode-math-mode latex-preview-pane
+                         latex-pretty-symbols lorem-ipsum latex-math-preview
+                         cdlatex cobol-mode)))
  '(plantuml-default-exec-mode 'jar t)
  '(plantuml-executable-path "/usr/bin/plantuml" t)
  '(plantuml-jar-path "/usr/share/java/plantuml.jar" t)
  '(reb-re-syntax 'string)
  '(safe-local-variable-values '((conding . utf-8)))
  '(send-mail-function 'mailclient-send-it)
+ '(show-trailing-whitespace t)
  '(size-indication-mode t)
  '(sql-electric-stuff 'semicolon)
  '(sql-mysql-login-params '(user password server database port))
