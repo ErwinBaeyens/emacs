@@ -39,6 +39,9 @@
 ;; show the size of the file in kb, mb...
 (setq size-indication-mode t)
 
+;; set the dired listing switches to show hidden files and group directories first
+(setq dired-listing-switches "-al --group-directories-first")
+
 ;; show line numbers
 (if (version< emacs-version "26.1")
     (progn (global-linum-mode t))
@@ -86,7 +89,18 @@
 ;; show trailing whitespace
 (setq show-trailing-whitespace t)
 
-;;; dired stuff
+;; switch to the newer -dwim versions of capitalizing
+(global-set-key (kbd "M-c") 'capitalize-dwim)
+(global-set-key (kbd "M-u") 'upcase-dwim)
+(global-set-key (kbd "M-l") 'downcase-dwim)
+
+;; Cycle spacing alternative
+;; (global-set-key (kbd "M-SPC") 'cycle-spacing)
+
+;; =============================================================================
+;; dired stuff
+;; =============================================================================
+
 (defun ora-ediff-files ()
   (interactive)
   (let ((files (dired-get-marked-files))
@@ -110,7 +124,6 @@
 
 (defun my-dired-mode-hooks ()
   "set all customisation for dired-mode"
-  (setq dired-listing-switches "-al --group-directories-first")
   (setq dired-dwim-target t)
   (define-key dired-mode-map "e" 'ora-ediff-files))
 
@@ -145,6 +158,7 @@
   (select-frame-set-input-focus (selected-frame)))
 
 (add-hook 'server-after-make-frame-hook #'focus-new-client-frame)
+
 ;; ==========================================================================
 ;; word and line wrapping settings mostly seen from doom emacs
 ;; ==========================================================================
@@ -154,6 +168,7 @@
 (setq-default truncate-lines t)
 (setq truncate-partial-width-windows nil)
 (setq sentence-end-double-space nil)
+
 ;; required for POSIX compliance
 (setq require-final-newline t)
 
@@ -186,8 +201,6 @@
 
 (global-set-key "\C-x2" 'my-split-window-func)
 
-;; jump backwards to the previous pane
-(global-set-key (kbd "S-C-x S-C-o") 'previous-multiframe-window)
 
 (defun swap-windows()
   "If you have 2 windows it swaps them."
@@ -317,8 +330,8 @@ Ignore comments if IGNORE-COMMENTS is non-nil"
 ;; = End xml mode stuff
 ;; =============================================================================
 
-(defvar find-file-root-prefix (if
-                                  (featurep 'xemacs) "/[sudo/root@localhost]" "/sudo:root@localhost:" )
+(defvar find-file-root-prefix
+  "/sudo:root@localhost:"
   "*The filename prefix used to open a file with `find-file-root'")
 
 (defvar find-file-root-history nil
@@ -385,20 +398,17 @@ Ignore comments if IGNORE-COMMENTS is non-nil"
          ;; (‹extension› . ‹shell program name›)
          `(
            ;; ("php" . "php")
-           ("pl" . "perl")
-           ("py" . "python")
-           ("py3" . ,(if (string-equal system-type "windows-nt") "c:/Python32/python.exe" "python3"))
-           ("rb" . "ruby")
-           ("go" . "go run")
-           ("js" . "node") ; node.js
-           ("sh" . "bash")
-           ("clj" . "java -cp /home/xah/apps/clojure-1.6.0/clojure-1.6.0.jar clojure.main")
-           ("rkt" . "racket")
-           ("ml" . "ocaml")
-           ("vbs" . "cscript")
-           ("tex" . "pdflatex")
+           ("pl"    . "perl")
+           ("py"    . "python")
+           ("py3"   . "python3")
+           ("rb"    . "ruby")
+           ("go"    . "go run")
+           ("js"    . "node") ; node.js
+           ("sh"    . "bash")
+           ("vbs"   . "cscript")
+           ("tex"   . "pdflatex")
            ("latex" . "pdflatex")
-           ("java" . "javac")
+           ("java"  . "javac")
            ))
 
         -fname
@@ -479,10 +489,10 @@ Ignore comments if IGNORE-COMMENTS is non-nil"
       '((sequence "TODO" "IN-PROGRESS" "WAITING" "DONE")))
 
 
-;; set up the different agenda files.
-(setq org-agenda-files (list "~/Dropbox/Erwin Stuff/todo/work.org"
-                             "~/Dropbox/Erwin Stuff/todo/home.org"
-                             "~/Dropbox/Erwin Stuff/todo/private.org"))
+;; ;; set up the different agenda files.
+;; (setq org-agenda-files (list "~/Dropbox/Erwin Stuff/todo/work.org"
+;;                              "~/Dropbox/Erwin Stuff/todo/home.org"
+;;                              "~/Dropbox/Erwin Stuff/todo/private.org"))
 
 
 (setq org-capture-templates
@@ -501,22 +511,10 @@ Ignore comments if IGNORE-COMMENTS is non-nil"
 (org-babel-do-load-languages
  'org-babel-load-languages
    '(
-      (plantuml . t)
-     (python . t)
-     (ditaa . t)
+      (python . t)
+      (ditaa . t)
      )
    )
-
-;; Enable plantuml-mode for PlantUML files
-(add-to-list 'auto-mode-alist '("\\.plantuml\\'" . plantuml-mode))
-
-;; integrate plantuml with org-mode
-(add-to-list 'org-src-lang-modes '("plantuml" . plantuml))
-
-(setq plantuml-default-exec-mode 'jar)
-(setq plantuml-executable-path "/usr/bin/plantuml")
-(setq plantuml-jar-path "/usr/share/java/plantuml.jar")
-(setq org-plantuml-jar-path "/usr/share/java/plantuml.jar")
 
 ;;
 ;; allow exporting to spreadsheets
@@ -584,7 +582,26 @@ nil (point-min) (point-max))
   (define-key lsp-mode-map (kbd "C-c l") lsp-command-map))
 
 ;; =============================================================================
-;; Begin python-mode related settings
+;; copilot mode
+;; =============================================================================
+(use-package copilot
+  :vc (:url "https://github.com/copilot-emacs/copilot.el"
+            :rev "newest"
+            :branch "main")
+  :ensure t
+  :hook (prog-mode . copilot-mode)
+  :bind (:map copilot-completion-map
+              ("<tab>" . copilot-accept-completion)
+              ("TAB" . copilot-accept-completion)
+              ("C-<tab>" . copilot-accept-completion-by-word)
+              ("C-TAB" . copilot-accept-completion-by-word)
+              ("C-n" . copilot-next-completion)
+              ("C-p" . copilot-previous-completion)))
+
+(setq copilot-chat-use-agent-mode t)
+
+;; =============================================================================
+;; Begin pythonmode related settings
 ;; =============================================================================
 
 (require 'python-mode)
@@ -593,11 +610,9 @@ nil (point-min) (point-max))
 (add-to-list 'load-path "~/.emacs.d/lisp/python-mode")
 (setq py-install-directory "~/.emacs.d/lisp/python-mode")
 
-
-(use-package Python
+(use-package python
     :hook
   (python-mode . hs-minor-mode))
-
 
 (use-package pyvenv
     :ensure t
@@ -606,24 +621,20 @@ nil (point-min) (point-max))
     ;; set the correct interpreter
     (setq pyvenv-post-activate-hooks
           (list (lambda ()
-                  (setq python-shell-interpreter (concat pyvenv-virtual-env "bin/python3")))))
+                  (setq python-shell-interpreter (concat pyvenv-virtual-env "./bin/python3")))))
+
     (setq pyvenv-post-deactivate-hooks
           (list (lambda ()
                   setq python-shell-interpreter "python3"))))
 
-
-;; ;; enable flycheck
-;; (add-hook 'after-init-hook #'global-flycheck-mode)
-
-(use-package python-black
-    :demand t
-    :after Python
-    :hook (python-mode . python-black-on-save-mode-enable-dwim))
+;; (use-package python-black
+;;     :demand t
+;;     :after Python
+;;     :hook (python-mode . python-black-on-save-mode-enable-dwim))
 
 (require 'auto-complete-config)
 (add-to-list 'ac-dictionary-directories "~/emacs.d/elpa/auto-complete*/dict")
 (add-hook 'js2-mode-hook 'ac-js2-mode)
-
 
 (require 'auto-complete)
 (global-auto-complete-mode t)
@@ -633,7 +644,7 @@ nil (point-min) (point-max))
 
 (defun My-python-mode-hooks ()
   "All the custom stuff for python in one place"
-  (define-key python-mode-map "C-m" 'newline-and-indent)
+  ;; (define-key python-mode-map "C-m" 'newline-and-indent)
   (set-fill-column 132)
   (auto-complete-mode t)
   (lsp-deferred)
@@ -641,6 +652,52 @@ nil (point-min) (point-max))
   )
 
 (add-hook 'python-mode-hook 'My-python-mode-hooks)
+
+
+;; =============================================================================
+;; cbm basic mode
+;; =============================================================================
+(require 'basic-ide)
+(setq
+      basic-ide-cbmbasic-executable "/home/erwin/bin/cbmbasic"
+      basic-ide-x64-executable "/usr/bin/x64"
+      basic-ide-x64-kernal "/usr/share/vice/C64/kernal-901227-03.bin"
+      )
+
+(add-hook 'basic-mode-hook (lambda ()
+                             (require 'basic-ide)
+                             (basic-ide-mode)
+                             (flycheck-mode)
+                             (company-mode)))
+
+
+  (flycheck-define-checker basic
+    "A syntax checker for the Bas 2.5 interpreter http://www.moria.de/~michael/bas/"
+    :command ("bas" (eval (buffer-file-name)) )
+    :error-patterns
+    ((error line-start  "Error: " (message) "in line " line " at:" line-end))
+    :modes basic-mode)
+
+(add-to-list 'flycheck-checkers 'basic)
+(flycheck-mode)
+
+  (defun company-basic-ide-backend (command &optional arg &rest ignored)
+    (interactive (list 'interactive))
+    (cl-case command
+      (interactive (company-begin-backend 'basic-ide-completion-backend))
+      (prefix (and (eq major-mode 'basic-mode)
+                   (company-grab-symbol)))
+      (candidates
+       (cl-remove-if-not
+        (lambda (c) (string-prefix-p arg c))
+        basic-ide-completion-backend))))
+  (setq company-backends '(company-basic-ide-backend))
+(company-mode)
+
+;; =============================================================================
+;; End cbm basic mode
+;; =============================================================================
+
 
 ;; =============================================================================
 ;; Ansible-mode
@@ -672,7 +729,7 @@ nil (point-min) (point-max))
                  (shell-quote-argument buffer-file-name)))))
 
 (add-hook 'yaml-mode-hook #'ansible-lint-errors)
-
+(add-hook 'yaml-mode-hook 'copilot-mode)
 ;; =============================================================================
 ;; yaml-mode
 ;; =============================================================================
@@ -1018,40 +1075,34 @@ nil (point-min) (point-max))
  '(org-safe-remote-resources
    '("\\`https://www\\.cybertec-postgresql\\.com\\(?:/\\|\\'\\)"))
  '(package-selected-packages
-   '(minimap lsp-docker lsp-jedi flycheck-yamllint math-preview ansible esup
-             plantuml-mode wgrep dired-subtree k8s-mode vc-msg terraform-mode
-             crontab-mode lsp-ui lsp-mode python-black cl-libify pyenv pyvenv
-             vterm-toggle orgtbl-aggregate auto-complete-nxml html5-schema ##
-             package-selected-packages
-             '(yasnippet yaml-mode web-mode typing time-ext tile swiper-helm
-                         swiper ssh-tunnels ssh-deploy ssh-config-mode
-                         ssh-agency ssh speed-type python-mode python powershell
-                         org-gnome org nlinum multiple-cursors mic-paren magit
-                         load-dir json-mode js2-mode jinja2-mode icicles
-                         gandalf-theme flymake-yaml flymake-python-pyflakes
-                         flymake-php flymake-json flycheck-pyflakes
-                         flycheck-pycheckers flycheck-phpstan flycheck
-                         datetime-format datetime counsel bison-mode
-                         auto-complete-exuberant-ctags auto-complet ac-rtags
-                         ac-php-core ac-php ac-html-csswatcher ac-html-angular
-                         ac-html ac-etags magit-popup with-editor treepy graphql
-                         git-commit ghub dash async highlight-indent-guides
-                         vala-snippets vala-mode flymake-vala yafolding
-                         keychain-environment ox-asciidoc adoc-mode
-                         dired-subtree markdown-mode markdownfmt markdown-toc
-                         markdown-preview-mode markdown-preview-eww
-                         markdown-mode+ projectile ace-window pyenv-mode
-                         ascii-art-to-unicode md-readme org-link-minor-mode
-                         helm-swoop ag wgrep-ag shackle autotetris-mode vterm
-                         aggressive-indent aggressive-fill-paragraph lua-mode
-                         flymake-lua ivy folding fold-this fold-dwim-org
-                         fold-dwim hideshow-org dash-functional dash-at-point
-                         latex-unicode-math-mode latex-preview-pane
-                         latex-pretty-symbols lorem-ipsum latex-math-preview
-                         cdlatex cobol-mode)))
- '(plantuml-default-exec-mode 'jar t)
- '(plantuml-executable-path "/usr/bin/plantuml" t)
- '(plantuml-jar-path "/usr/share/java/plantuml.jar" t)
+   '(ac-etags ac-html ac-rtags adoc-mode ag aggressive-fill-paragraph
+              aggressive-indent aio ansible ascii-art-to-unicode
+              auto-complete-exuberant-ctags auto-complete-nxml basic-c-compile
+              basic-ide cl-libify company-c-headers company-ctags copilot
+              counsel crontab-mode dap-mode dash-functional datetime
+              datetime-format dired-subtree dockerfile-mode eat esup
+              flycheck-phpstan flycheck-pycheckers flycheck-pyflakes
+              flycheck-yamllint flymake-json flymake-lua flymake-php
+              flymake-python-pyflakes flymake-vala flymake-yaml fold-dwim-org
+              fold-this folding gandalf-theme ghub git-commit graphql helm-lsp
+              helm-mode-manager helm-swoop hideshow-org highlight-indent-guides
+              html5-schema jedi jinja2-mode js2-mode json-mode json-rpc k8s-mode
+              keychain-environment latex-pretty-symbols latex-preview-pane
+              latex-unicode-math-mode load-dir lorem-ipsum lsp-ivy lsp-python-ms
+              lsp-ui lua-mode magit magit-popup markdown-preview-eww
+              markdown-preview-mode markdown-toc markdownfmt math-preview mcp
+              md-readme mic-paren minimap multiple-cursors nlinum org-gnome
+              orgtbl-aggregate ox-asciidoc persistent-scratch plantuml-mode
+              polymode projectile pyenv-mode python-black python-mode
+              python-tdd-mode pyvenv request shackle shell-maker ssh ssh-agency
+              ssh-config-mode ssh-deploy ssh-tunnels swiper-helm terraform-mode
+              tile time-ext treesit-auto treesit-ispell typing vc-msg vterm
+              wgrep-ag yafolding yasnippet))
+ '(package-vc-selected-packages
+   '((copilot :url "https://github.com/copilot-emacs/copilot.el" :branch "main")))
+ '(persistent-scratch-autosave-mode t)
+ '(persistent-scratch-backup-directory "~/.emacs.d/scratch")
+ '(persistent-scratch-save-file "/home/exl217/.emacs.d/scratch/.persistent-scratch")
  '(reb-re-syntax 'string)
  '(safe-local-variable-values '((conding . utf-8)))
  '(send-mail-function 'mailclient-send-it)
@@ -1060,6 +1111,7 @@ nil (point-min) (point-max))
  '(sql-electric-stuff 'semicolon)
  '(sql-mysql-login-params '(user password server database port))
  '(sql-mysql-program "mysql" t)
+ '(tab-width 4)
  '(tool-bar-mode nil)
  '(warning-suppress-types '((comp))))
 
